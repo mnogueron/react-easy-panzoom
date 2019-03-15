@@ -1,0 +1,39 @@
+{
+  "name": "react-panzoom",
+  "version": "0.0.1",
+  "description": "Wrapper to enable pan and zoom for any React component",
+  "main": "index.js",
+  "author": "mnogueron",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:mnogueron/react-panzoom.git"
+  },
+  "license": "MIT",
+  "scripts": {
+    "storybook": "start-storybook -p 6006",
+    "build-storybook": "build-storybook"
+  },
+  "files": [
+    "*.md",
+    "dist",
+    "src"
+  ],
+  "peerDependencies": {
+    "react": ">=16.0.0"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@babel/core": "^7.3.4",
+    "@storybook/addon-actions": "^5.0.1",
+    "@storybook/addon-knobs": "^5.0.1",
+    "@storybook/addon-links": "^5.0.1",
+    "@storybook/addons": "^5.0.1",
+    "@storybook/react": "^5.0.1",
+    "@storybook/theming": "^5.0.1",
+    "babel-loader": "^8.0.5",
+    "react": "^16.8.4",
+    "react-dom": "^16.8.4",
+    "webpack": "^4.29.6",
+    "webpack-cli": "^3.3.0"
+  }
+}
