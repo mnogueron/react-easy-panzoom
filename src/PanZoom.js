@@ -170,7 +170,8 @@ class PanZoom extends React.Component<Props> {
             border: 'solid 1px red',
             padding: 8,
             transformOrigin: '0 0 0',
-            transform: `matrix(${scale}, 0, 0, ${scale}, ${x}, ${y})`
+            transform: `matrix(${scale}, 0, 0, ${scale}, ${x}, ${y})`,
+            transition: 'matrix 0.25s linear',
           }}
         >
           This div can be panned
