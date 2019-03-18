@@ -1,6 +1,11 @@
+// @flow
 import * as React from 'react'
 
-class PanZoom extends React.Component {
+type Props = {
+  zoomSpeed: number,
+}
+
+class PanZoom extends React.Component<Props> {
 
   container = null
   dragContainer = null
@@ -23,7 +28,9 @@ class PanZoom extends React.Component {
     }
 
     const isLeftButton = ((e.button === 1 && window.event !== null) || e.button === 0)
-    if (!isLeftButton) return
+    if (!isLeftButton) {
+      return
+    }
 
     this.panning = true
 
@@ -66,7 +73,7 @@ class PanZoom extends React.Component {
   }
 
   getScaleMultiplier = (delta) => {
-    let speed = 0.065 // TODO make speed a props
+    let speed = 0.065 * this.props.zoomSpeed
     let scaleMultiplier = 1
     if (delta > 0) { // zoom out
       scaleMultiplier = (1 - speed)
@@ -121,6 +128,10 @@ class PanZoom extends React.Component {
       </div>
     )
   }
+}
+
+PanZoom.defaultProps = {
+  zoomSpeed: 1,
 }
 
 export default PanZoom

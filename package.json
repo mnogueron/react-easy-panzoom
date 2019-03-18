@@ -2,7 +2,7 @@
   "name": "react-panzoom",
   "version": "0.0.1",
   "description": "Wrapper to enable pan and zoom for any React component",
-  "main": "index.js",
+  "main": "./dist/index.js",
   "author": "mnogueron",
   "repository": {
     "type": "git",
@@ -11,7 +11,7 @@
   "license": "MIT",
   "scripts": {
     "storybook": "start-storybook -p 6006",
-    "build-storybook": "build-storybook"
+    "build": "webpack"
   },
   "files": [
     "*.md",
@@ -24,16 +24,24 @@
   "dependencies": {},
   "devDependencies": {
     "@babel/core": "^7.3.4",
+    "@babel/plugin-proposal-class-properties": "^7.3.4",
+    "@babel/preset-env": "^7.3.4",
+    "@babel/preset-flow": "^7.0.0",
+    "@babel/preset-react": "^7.0.0",
     "@storybook/addon-actions": "^5.0.1",
     "@storybook/addon-knobs": "^5.0.1",
     "@storybook/addon-links": "^5.0.1",
     "@storybook/addons": "^5.0.1",
     "@storybook/react": "^5.0.1",
     "@storybook/theming": "^5.0.1",
+    "babel-cli": "^6.26.0",
     "babel-loader": "^8.0.5",
+    "flow-bin": "^0.95.1",
     "react": "^16.8.4",
     "react-dom": "^16.8.4",
+    "terser-webpack-plugin": "^1.2.3",
     "webpack": "^4.29.6",
-    "webpack-cli": "^3.3.0"
+    "webpack-cli": "^3.3.0",
+    "webpack-node-externals": "^1.7.2"
   }
 }
