@@ -25,6 +25,11 @@ class PanZoom extends React.Component<Props> {
     scale: 1,
   }
 
+  onDoubleClick = (e) => {
+    const offset = this.getOffset(e)
+    this.zoomTo(offset.x, offset.y, 1.75)
+  }
+
   onMouseDown = (e) => {
     if (this.panning) {
       // modern browsers will fire mousedown for touch events too
@@ -154,6 +159,7 @@ class PanZoom extends React.Component<Props> {
     return (
       <div
         ref={ref => this.container = ref}
+        onDoubleClick={this.onDoubleClick}
         onMouseDown={this.onMouseDown}
         onWheel={this.onWheel}
         style={{ border: 'solid 1px green', height: 500 }}
