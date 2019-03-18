@@ -129,6 +129,10 @@ class PanZoom extends React.Component<Props> {
     this.setState(({ x: this.state.x + dx, y: this.state.y + dy }))
   }
 
+  zoomAbs = (x, y, zoomLevel) => {
+    this.zoomTo(x, y, zoomLevel / this.state.scale)
+  }
+
   zoomTo = (x, y, ratio) => {
     const { x: transformX, y: transformY, scale } = this.state
     const newScale = scale * ratio
