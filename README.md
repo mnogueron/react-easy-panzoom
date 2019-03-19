@@ -19,7 +19,7 @@ yarn add react-easy-panzoom
 ## Usage
 
 ```js
-import PanZoom from 'react-easy-panzoom'
+import { PanZoom } from 'react-easy-panzoom'
 
 // ...
 render() {
