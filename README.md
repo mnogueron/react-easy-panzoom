@@ -1,4 +1,4 @@
-# react-panzoom
+# react-easy-panzoom
 __🚧 Please be advised that this library is currently under construction and might change quickly  🚧__
 
 Wrapper to enable pan and zoom features for any React component
@@ -8,18 +8,18 @@ react-panzoom requires React 16 or later.
 
 Using `npm`:
 ```shell
-npm install --save react-panzoom
+npm install --save react-easy-panzoom
 ```
 
 Using `yarn`:
 ```shell
-yarn add react-panzoom
+yarn add react-easy-panzoom
 ```
 
 ## Usage
 
 ```js
-import PanZoom from 'react-panzoom'
+import PanZoom from 'react-easy-panzoom'
 
 // ...
 render() {
