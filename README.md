@@ -18,8 +18,8 @@ yarn add react-panzoom
 
 ```js
 import PanZoom from 'react-panzoom'
-// *snip*
 
+// ...
 render() {
   return (
     <PanZoom>
