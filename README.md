@@ -1,4 +1,6 @@
 # react-panzoom
+__🚧 Please be advised that this library is currently under construction and might change quickly  🚧__
+
 Wrapper to enable pan and zoom features for any React component
 
 ## Installation
@@ -18,8 +20,8 @@ yarn add react-panzoom
 
 ```js
 import PanZoom from 'react-panzoom'
-// *snip*
 
+// ...
 render() {
   return (
     <PanZoom>
