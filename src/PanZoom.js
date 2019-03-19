@@ -53,9 +53,9 @@ class PanZoom extends React.Component<Props> {
       return
     }
 
+    // Touch events fire mousedown on modern browsers, but it should not
+    // be considered as we will handle touch event separately
     if (this.panning) {
-      // modern browsers will fire mousedown for touch events too
-      // we do not want this: touch is handled separately.
       e.stopPropagation()
       return false
     }
@@ -83,7 +83,7 @@ class PanZoom extends React.Component<Props> {
   onMouseMove = (e) => {
     if (this.panning) {
 
-      // TODO disable if using touch
+      // TODO disable if using touch event
 
       this.triggerOnPanStart(e)
 
@@ -108,9 +108,9 @@ class PanZoom extends React.Component<Props> {
     this.panning = false
   }
 
+  // TODO probably add zoom props to stop pan on parent container mouseout
   onMouseOut = (e) => {
     this.triggerOnPanEnd(e)
-    // don't disable panning if not container
     this.panning = false
   }
 
