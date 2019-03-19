@@ -4,7 +4,7 @@ import * as React from 'react'
 type Props = {
   zoomSpeed?: number,
   doubleZoomSpeed?: number,
-  enable?: boolean,
+  disabled?: boolean,
   autoCenter?: boolean,
   autoCenterZoomLevel?: number,
 
@@ -49,6 +49,10 @@ class PanZoom extends React.Component<Props> {
   }
 
   onMouseDown = (e) => {
+    if (this.props.disabled) {
+      return
+    }
+
     if (this.panning) {
       // modern browsers will fire mousedown for touch events too
       // we do not want this: touch is handled separately.
@@ -111,6 +115,10 @@ class PanZoom extends React.Component<Props> {
   }
 
   onWheel = (e) => {
+    if (this.props.disabled) {
+      return
+    }
+
     const scale = this.getScaleMultiplier(e.deltaY)
     const offset = this.getOffset(e)
     this.zoomTo(offset.x, offset.y, scale)
@@ -183,7 +191,7 @@ class PanZoom extends React.Component<Props> {
   }
 
   render() {
-    const { children, style } = this.props
+    const { children, style, disabled } = this.props
     const { x, y, scale } = this.state
     return (
       <div
@@ -191,7 +199,7 @@ class PanZoom extends React.Component<Props> {
         onDoubleClick={this.onDoubleClick}
         onMouseDown={this.onMouseDown}
         onWheel={this.onWheel}
-        style={style}
+        style={{ cursor: disabled ? 'initial' : 'pointer', ...style }}
       >
         <div
           ref={ref => this.dragContainer = ref}
