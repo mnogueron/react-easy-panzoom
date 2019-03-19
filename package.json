@@ -1,12 +1,12 @@
 {
-  "name": "react-panzoom",
+  "name": "react-easy-panzoom",
   "version": "0.0.1",
   "description": "Wrapper to enable pan and zoom for any React component",
   "main": "./dist/index.js",
   "author": "mnogueron",
   "repository": {
     "type": "git",
-    "url": "git@github.com:mnogueron/react-panzoom.git"
+    "url": "git@github.com:mnogueron/react-easy-panzoom.git"
   },
   "license": "MIT",
   "scripts": {
