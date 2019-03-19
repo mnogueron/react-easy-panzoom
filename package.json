@@ -18,6 +18,13 @@
     "dist",
     "src"
   ],
+  "keywords": [
+    "react",
+    "react-component",
+    "pan",
+    "zoom",
+    "panzoom"
+  ],
   "peerDependencies": {
     "react": ">=16.0.0"
   },
