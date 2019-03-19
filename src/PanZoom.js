@@ -3,11 +3,14 @@ import * as React from 'react'
 
 type Props = {
   zoomSpeed?: number,
+  doubleZoomSpeed?: number,
   enable?: boolean,
+  autoCenter?: boolean,
+  autoCenterZoomLevel?: number,
 
-  onPanStart: (any) => void,
-  onPan: (any) => void,
-  onPanEnd: (any) => void,
+  onPanStart?: (any) => void,
+  onPan?: (any) => void,
+  onPanEnd?: (any) => void,
 }
 
 class PanZoom extends React.Component<Props> {
@@ -25,9 +28,24 @@ class PanZoom extends React.Component<Props> {
     scale: 1,
   }
 
+  componentDidMount(): void {
+    const { autoCenter, autoCenterZoomLevel } = this.props
+    if (autoCenter) {
+      this.autoCenter(autoCenterZoomLevel)
+    }
+  }
+
+  componentDidUpdate(prevProps): void {
+    if (prevProps.autoCenter !== this.props.autoCenter
+      && this.props.autoCenter) {
+      this.autoCenter(this.props.autoCenterZoomLevel)
+    }
+  }
+
   onDoubleClick = (e) => {
+    const { doubleZoomSpeed } = this.props
     const offset = this.getOffset(e)
-    this.zoomTo(offset.x, offset.y, 1.75)
+    this.zoomTo(offset.x, offset.y, doubleZoomSpeed)
   }
 
   onMouseDown = (e) => {
@@ -92,6 +110,13 @@ class PanZoom extends React.Component<Props> {
     this.panning = false
   }
 
+  onWheel = (e) => {
+    const scale = this.getScaleMultiplier(e.deltaY)
+    const offset = this.getOffset(e)
+    this.zoomTo(offset.x, offset.y, scale)
+    e.preventDefault()
+  }
+
   triggerOnPanStart = (e) => {
     const { onPanStart } = this.props
     if (!this.panStartTriggered) {
@@ -111,13 +136,6 @@ class PanZoom extends React.Component<Props> {
     onPanEnd && onPanEnd(e)
   }
 
-  onWheel = (e) => {
-    const scale = this.getScaleMultiplier(e.deltaY)
-    const offset = this.getOffset(e)
-    this.zoomTo(offset.x, offset.y, scale)
-    e.preventDefault()
-  }
-
   getScaleMultiplier = (delta) => {
     let speed = 0.065 * this.props.zoomSpeed
     let scaleMultiplier = 1
@@ -128,6 +146,17 @@ class PanZoom extends React.Component<Props> {
     }
 
     return scaleMultiplier
+  }
+
+  autoCenter = (zoomLevel = 1) => {
+    const containerRect = this.container.getBoundingClientRect()
+    const clientRect = this.dragContainer.getBoundingClientRect()
+    const widthRatio = containerRect.width / clientRect.width
+    const heightRatio = containerRect.height / clientRect.height
+    const scale = Math.min(widthRatio, heightRatio) * zoomLevel
+    const x = (containerRect.width - (clientRect.width * scale)) / 2
+    const y = (containerRect.height - (clientRect.height * scale)) / 2
+    this.setState({ x, y, scale })
   }
 
   moveBy = (dx, dy) => {
@@ -144,7 +173,6 @@ class PanZoom extends React.Component<Props> {
     const newX = x - ratio * (x - transformX)
     const newY = y - ratio * (y - transformY)
     this.setState({ x: newX, y: newY, scale: newScale })
-    debugger
   }
 
   getOffset = (e) => {
@@ -155,6 +183,7 @@ class PanZoom extends React.Component<Props> {
   }
 
   render() {
+    const { children, style } = this.props
     const { x, y, scale } = this.state
     return (
       <div
@@ -162,19 +191,17 @@ class PanZoom extends React.Component<Props> {
         onDoubleClick={this.onDoubleClick}
         onMouseDown={this.onMouseDown}
         onWheel={this.onWheel}
-        style={{ border: 'solid 1px green', height: 500 }}
+        style={style}
       >
         <div
           ref={ref => this.dragContainer = ref}
           style={{
-            border: 'solid 1px red',
-            padding: 8,
             transformOrigin: '0 0 0',
             transform: `matrix(${scale}, 0, 0, ${scale}, ${x}, ${y})`,
-            transition: 'matrix 0.25s linear',
+            transition: 'all 0.05s linear',
           }}
         >
-          This div can be panned
+          {children}
         </div>
       </div>
     )
@@ -183,6 +210,7 @@ class PanZoom extends React.Component<Props> {
 
 PanZoom.defaultProps = {
   zoomSpeed: 1,
+  doubleZoomSpeed: 1.75,
 }
 
 export default PanZoom
