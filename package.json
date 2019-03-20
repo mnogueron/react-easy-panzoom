@@ -14,7 +14,8 @@
     "clean": "rm -rf lib && mkdir lib",
     "prepublish": "npm run lib",
     "storybook": "start-storybook -p 6006",
-    "build": "webpack"
+    "build": "webpack",
+    "build:cjs": "cross-env NODE_ENV=production babel --config-file ./babel.config.js ./src --out-dir ./lib --ignore \"**/*.test.js\""
   },
   "files": [
     "*.md",
