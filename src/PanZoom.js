@@ -8,6 +8,7 @@ type Props = {
   autoCenter?: boolean,
   autoCenterZoomLevel?: number,
   disableKeyInteraction?: boolean,
+  realPinch?: boolean,
   keyMapping?: { [string]: { x: number, y: number, z: number }},
 
   onPanStart?: (any) => void,
@@ -15,6 +16,7 @@ type Props = {
   onPanEnd?: (any) => void,
 }
 
+// TODO support minZoom, maxZoom
 class PanZoom extends React.Component<Props> {
 
   container = null

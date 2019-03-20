@@ -39,6 +39,9 @@ render() {
 |zoomSpeed|`number`|1|Sets the zoom speed|
 |doubleZoomSpeed|`number`|1.75|Sets the zoom speed for double click|
 |disabled|`bool`|false|Disable pan and zoom|
+|disableKeyInteraction|`bool`|false|Disable keyboard interaction|
+|realPinch|`bool`|false|Enable real pinch interaction for touch events|
+|keyMapping|`object`|false|Define specific key mapping for keyboard interaction (e.g. `{ '<keyCode>': { x: 0, y: 1, z: 0 } }`, with `<keyCode>` being the key code to map)|
 |onPanStart|`func`| |Fired on pan start|
 |onPan|`func`| |Fired on pan|
 |onPanEnd|`func`| |Fired on pan end|
