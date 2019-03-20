@@ -7,6 +7,8 @@ type Props = {
   disabled?: boolean,
   autoCenter?: boolean,
   autoCenterZoomLevel?: number,
+  disableKeyInteraction?: boolean,
+  keyMapping?: { [string]: { x: number, y: number, z: number }},
 
   onPanStart?: (any) => void,
   onPan?: (any) => void,
@@ -42,6 +44,11 @@ class PanZoom extends React.Component<Props> {
     }
   }
 
+  componentWillUnmount(): void {
+    this.cleanMouseListeners()
+    this.releaseTextSelection()
+  }
+
   onDoubleClick = (e) => {
     const { doubleZoomSpeed } = this.props
     const offset = this.getOffset(e)
@@ -73,11 +80,10 @@ class PanZoom extends React.Component<Props> {
       y: offset.y,
     }
 
-    document.addEventListener('mousemove', this.onMouseMove)
-    document.addEventListener('mouseup', this.onMouseUp)
+    this.setMouseListeners()
 
-    // TODO prevent text selection
-
+    // Prevent text selection
+    this.captureTextSelection()
   }
 
   onMouseMove = (e) => {
@@ -103,9 +109,52 @@ class PanZoom extends React.Component<Props> {
 
   onMouseUp = (e) => {
     this.triggerOnPanEnd(e)
-    document.removeEventListener('mousemove', this.onMouseMove)
-    document.removeEventListener('mouseup', this.onMouseUp)
+    this.cleanMouseListeners()
     this.panning = false
+    this.releaseTextSelection()
+  }
+
+  onKeyDown = (e) => {
+    const { keyMapping, disableKeyInteraction } = this.props
+
+    if (disableKeyInteraction) {
+      return
+    }
+
+    const keys = {
+      '38': { x: 0, y: 1, z: 0 }, // up
+      '40': { x: 0, y: -1, z: 0 }, // down
+      '37': { x: 1, y: 0, z: 0 }, // left
+      '39': { x: -1, y: 0, z: 0 }, // right
+      '189': { x: 0, y: 0, z: 1 }, // zoom out
+      '109': { x: 0, y: 0, z: 1 }, // zoom out
+      '187': { x: 0, y: 0, z: -1 }, // zoom in
+      '107': { x: 0, y: 0, z: -1 }, // zoom in
+      ...keyMapping,
+    }
+
+    const mappedCoords = keys[e.keyCode]
+    if (mappedCoords) {
+      const { x, y, z } = mappedCoords
+      e.preventDefault()
+      e.stopPropagation()
+
+      if (x || y) {
+        const containerRect = this.container.getBoundingClientRect()
+        const offset = Math.min(containerRect.width, containerRect.height)
+        const moveSpeedRatio = 0.05
+        const dx = offset * moveSpeedRatio * x
+        const dy = offset * moveSpeedRatio * y
+
+        this.moveBy(dx, dy)
+      }
+
+      if (z) {
+        const scaleMultiplier = this.getScaleMultiplier(z)
+        const containerRect = this.container.getBoundingClientRect()
+        this.zoomTo(containerRect.width / 2, containerRect.height / 2, scaleMultiplier)
+      }
+    }
   }
 
   // TODO probably add zoom props to stop pan on parent container mouseout
@@ -123,6 +172,28 @@ class PanZoom extends React.Component<Props> {
     const offset = this.getOffset(e)
     this.zoomTo(offset.x, offset.y, scale)
     e.preventDefault()
+  }
+
+  setMouseListeners = () => {
+    document.addEventListener('mousemove', this.onMouseMove)
+    document.addEventListener('mouseup', this.onMouseUp)
+  }
+
+  cleanMouseListeners = () => {
+    document.removeEventListener('mousemove', this.onMouseMove)
+    document.removeEventListener('mouseup', this.onMouseUp)
+  }
+
+  preventDefault = (e) => {
+    e.preventDefault()
+  }
+
+  captureTextSelection = () => {
+    window.addEventListener('selectstart', this.preventDefault)
+  }
+
+  releaseTextSelection = () => {
+    window.removeEventListener('selectstart', this.preventDefault)
   }
 
   triggerOnPanStart = (e) => {
@@ -191,14 +262,20 @@ class PanZoom extends React.Component<Props> {
   }
 
   render() {
-    const { children, style, disabled } = this.props
+    const { children, style, disabled, disableKeyInteraction } = this.props
     const { x, y, scale } = this.state
     return (
       <div
         ref={ref => this.container = ref}
+        {
+          ...(disableKeyInteraction ? {} : {
+            tabIndex: 0, // enable onKeyDown event
+          })
+        }
         onDoubleClick={this.onDoubleClick}
         onMouseDown={this.onMouseDown}
         onWheel={this.onWheel}
+        onKeyDown={this.onKeyDown}
         style={{ cursor: disabled ? 'initial' : 'pointer', ...style }}
       >
         <div

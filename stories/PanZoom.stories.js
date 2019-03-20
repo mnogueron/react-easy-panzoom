@@ -10,6 +10,7 @@ storiesOf('react-panzoom', module)
     <PanZoom
       style={{ border: 'solid 1px green', height: 500 }}
       disabled={boolean('Disabled', false)}
+      disableKeyInteraction={boolean('Disabled key interaction', false)}
       autoCenterZoomLevel={1}
       autoCenter
     >
