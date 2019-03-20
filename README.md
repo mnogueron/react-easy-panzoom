@@ -31,6 +31,30 @@ render() {
 }
 ```
 
+### Key mapping
+`PanZoom` component natively supports keyboard interactions with arrow keys and `-` / `+` keys. This mapping can be extends using `keyMapping` props.
+
+e.g. Mapping `w`, `a`, `s`, `d`:
+```js
+import { PanZoom } from 'react-easy-panzoom'
+
+// ...
+render() {
+  return (
+    <PanZoom
+      keyMapping={{
+        '87': { x: 0, y: -1, z: 0 },
+        '83': { x: 0, y: 1, z: 0 },
+        '65': { x: -1, y: 0, z: 0 },
+        '68': { x: 1, y: 0, z: 0 },
+      }}
+    >
+      { 'This content can be panned and zoomed' }
+    </PanZoom>
+  )
+}
+```
+
 ## Properties
 |Name|Type|Default|Description|
 |---|---|---|---|
