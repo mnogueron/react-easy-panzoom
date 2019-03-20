@@ -71,6 +71,11 @@ render() {
 |onPanEnd|`func`| |Fired on pan end|
 |style|`object`| |Override the inline-styles of the root element|
 
+## Thanks
+This react library is based on the awesome [panzoom][panzoom] by @anvaka. 
+
 ## License
 
 The files included in this repository are licensed under the MIT license.
+
+[panzoom]: https://github.com/anvaka/panzoom
