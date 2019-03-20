@@ -22,7 +22,10 @@ class PanZoom extends React.Component<Props> {
 
   mousePos = null
   panning = false
+  touchInProgress = false
   panStartTriggered = false
+
+  pinchZoomLength = 0
 
   state = {
     x: 0,
@@ -46,6 +49,7 @@ class PanZoom extends React.Component<Props> {
 
   componentWillUnmount(): void {
     this.cleanMouseListeners()
+    this.cleanTouchListeners()
     this.releaseTextSelection()
   }
 
@@ -62,7 +66,7 @@ class PanZoom extends React.Component<Props> {
 
     // Touch events fire mousedown on modern browsers, but it should not
     // be considered as we will handle touch event separately
-    if (this.panning) {
+    if (this.touchInProgress) {
       e.stopPropagation()
       return false
     }
@@ -114,6 +118,23 @@ class PanZoom extends React.Component<Props> {
     this.releaseTextSelection()
   }
 
+  // TODO probably add zoom props to stop pan on parent container mouseout
+  onMouseOut = (e) => {
+    this.triggerOnPanEnd(e)
+    this.panning = false
+  }
+
+  onWheel = (e) => {
+    if (this.props.disabled) {
+      return
+    }
+
+    const scale = this.getScaleMultiplier(e.deltaY)
+    const offset = this.getOffset(e)
+    this.zoomTo(offset.x, offset.y, scale)
+    e.preventDefault()
+  }
+
   onKeyDown = (e) => {
     const { keyMapping, disableKeyInteraction } = this.props
 
@@ -157,21 +178,88 @@ class PanZoom extends React.Component<Props> {
     }
   }
 
-  // TODO probably add zoom props to stop pan on parent container mouseout
-  onMouseOut = (e) => {
-    this.triggerOnPanEnd(e)
-    this.panning = false
+  onTouchStart = (e) => {
+    if (e.touches.length === 1) {
+      // Drag
+      const touch = e.touches[0]
+      const offset = this.getOffset(touch)
+      this.mousePos = {
+        x: offset.x,
+        y: offset.y,
+      }
+
+      this.touchInProgress = true
+      this.setTouchListeners()
+    } else if (e.touches.length === 2) {
+      // pinch
+      this.pinchZoomLength = this.getPinchZoomLength(e.touches[0], e.touches[1])
+      this.touchInProgress = true
+      this.setTouchListeners()
+    }
   }
 
-  onWheel = (e) => {
-    if (this.props.disabled) {
-      return
-    }
+  onToucheMove = (e) => {
+    const { realPinch } = this.props
+    if (e.touches.length === 1) {
+      e.stopPropagation()
+      const touch = e.touches[0]
+      const offset = this.getOffset(touch)
+      const dx = offset.x - this.mousePos.x
+      const dy = offset.y - this.mousePos.y
 
-    const scale = this.getScaleMultiplier(e.deltaY)
-    const offset = this.getOffset(e)
-    this.zoomTo(offset.x, offset.y, scale)
-    e.preventDefault()
+      if (dx !== 0 || dy !== 0) {
+        this.triggerOnPanStart(e)
+      }
+
+      this.mousePos = {
+        x: offset.x,
+        y: offset.y,
+      }
+
+      this.moveBy(dx, dy)
+      this.triggerOnPan(e)
+    } else if (e.touches.length === 2) {
+      const finger1 = e.touches[0]
+      const finger2 = e.touches[1]
+      const currentPinZoomLength = this.getPinchZoomLength(finger1, finger2)
+
+      let scaleMultiplier = 1
+
+      if (realPinch) {
+        scaleMultiplier = currentPinZoomLength / this.pinchZoomLength
+      } else {
+        let delta = 0
+        if (currentPinZoomLength < this.pinchZoomLength) {
+          delta = 1
+        } else if (currentPinZoomLength > this.pinchZoomLength) {
+          delta = -1
+        }
+        scaleMultiplier = this.getScaleMultiplier(delta)
+      }
+
+      this.mousePos = {
+        x: (finger1.clientX + finger2.clientX) / 2,
+        y: (finger1.clientY + finger2.clientY) / 2,
+      }
+      this.zoomTo(this.mousePos.x, this.mousePos.y, scaleMultiplier)
+      this.pinchZoomLength = currentPinZoomLength
+      e.stopPropagation()
+      e.preventDefault()
+    }
+  }
+
+  onTouchEnd = (e) => {
+    if (e.touches.length === 0) {
+      const offset = this.getOffset(e.touches[0])
+      this.mousePos = {
+        x: offset.x,
+        y: offset.y,
+      }
+    } else {
+      this.touchInProgress = false
+      this.triggerOnPanEnd(e)
+      this.cleanTouchListeners()
+    }
   }
 
   setMouseListeners = () => {
@@ -182,6 +270,18 @@ class PanZoom extends React.Component<Props> {
   cleanMouseListeners = () => {
     document.removeEventListener('mousemove', this.onMouseMove)
     document.removeEventListener('mouseup', this.onMouseUp)
+  }
+
+  setTouchListeners = () => {
+    document.addEventListener('touchmove', this.onToucheMove)
+    document.addEventListener('touchend', this.onTouchEnd)
+    document.addEventListener('touchcancel', this.onTouchEnd)
+  }
+
+  cleanTouchListeners = () => {
+    document.removeEventListener('touchmove', this.onToucheMove)
+    document.removeEventListener('touchend', this.onTouchEnd)
+    document.removeEventListener('touchcancel', this.onTouchEnd)
   }
 
   preventDefault = (e) => {
@@ -225,6 +325,13 @@ class PanZoom extends React.Component<Props> {
     }
 
     return scaleMultiplier
+  }
+
+  getPinchZoomLength = (finger1, finger2) => {
+    return Math.sqrt(
+      (finger1.clientX - finger2.clientX) * (finger1.clientX - finger2.clientX) +
+      (finger1.clientY - finger2.clientY) * (finger1.clientY - finger2.clientY)
+    )
   }
 
   autoCenter = (zoomLevel = 1) => {
@@ -276,7 +383,8 @@ class PanZoom extends React.Component<Props> {
         onMouseDown={this.onMouseDown}
         onWheel={this.onWheel}
         onKeyDown={this.onKeyDown}
-        style={{ cursor: disabled ? 'initial' : 'pointer', ...style }}
+        onTouchStart={this.onTouchStart}
+        style={{ cursor: disabled ? 'initial' : 'pointer', overflow: 'hidden', ...style }}
       >
         <div
           ref={ref => this.dragContainer = ref}
