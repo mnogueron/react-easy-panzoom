@@ -386,7 +386,7 @@ class PanZoom extends React.Component<Props> {
         onWheel={this.onWheel}
         onKeyDown={this.onKeyDown}
         onTouchStart={this.onTouchStart}
-        style={{ cursor: disabled ? 'initial' : 'pointer', overflow: 'hidden', ...style }}
+        style={{ cursor: disabled ? 'initial' : 'pointer', ...style }}
       >
         <div
           ref={ref => this.dragContainer = ref}
