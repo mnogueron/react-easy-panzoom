@@ -15,6 +15,7 @@ module.exports = {
   },
   externals: [nodeExternals()],
   optimization: {
+    minimize: false,
     minimizer: [
       new TerserPlugin({
         terserOptions: {

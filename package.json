@@ -2,7 +2,7 @@
   "name": "react-easy-panzoom",
   "version": "0.1.0",
   "description": "Wrapper to enable pan and zoom for any React component",
-  "main": "./dist/index.js",
+  "main": "./lib/index.js",
   "author": "mnogueron",
   "repository": {
     "type": "git",
@@ -10,12 +10,15 @@
   },
   "license": "MIT",
   "scripts": {
+    "lib": "npm run clean && npm run build:cjs",
+    "clean": "rm -rf lib && mkdir lib",
+    "prepublish": "npm run lib",
     "storybook": "start-storybook -p 6006",
     "build": "webpack"
   },
   "files": [
     "*.md",
-    "dist",
+    "lib",
     "src"
   ],
   "keywords": [
@@ -30,6 +33,7 @@
   },
   "dependencies": {},
   "devDependencies": {
+    "@babel/cli": "^7.2.3",
     "@babel/core": "^7.3.4",
     "@babel/plugin-proposal-class-properties": "^7.3.4",
     "@babel/preset-env": "^7.3.4",
@@ -41,8 +45,8 @@
     "@storybook/addons": "^5.0.1",
     "@storybook/react": "^5.0.1",
     "@storybook/theming": "^5.0.1",
-    "babel-cli": "^6.26.0",
     "babel-loader": "^8.0.5",
+    "cross-env": "^5.2.0",
     "flow-bin": "^0.95.1",
     "react": "^16.8.4",
     "react-dom": "^16.8.4",
