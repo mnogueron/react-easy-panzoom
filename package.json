@@ -1,6 +1,6 @@
 {
   "name": "react-easy-panzoom",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Wrapper to enable pan and zoom for any React component",
   "main": "./lib/index.js",
   "author": "mnogueron",
@@ -27,7 +27,9 @@
     "react-component",
     "pan",
     "zoom",
-    "panzoom"
+    "panzoom",
+    "auto center",
+    "keyboard zoom"
   ],
   "peerDependencies": {
     "react": ">=16.0.0"
