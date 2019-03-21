@@ -12,6 +12,7 @@ type Props = {
   keyMapping?: { [string]: { x: number, y: number, z: number }},
   minZoom?: number,
   maxZoom?: number,
+  preventPan?: (event: SyntheticEvent, x: number, y: number) => boolean,
 
   onPanStart?: (any) => void,
   onPan?: (any) => void,
@@ -66,6 +67,7 @@ class PanZoom extends React.Component<Props> {
   }
 
   onMouseDown = (e) => {
+    const { preventPan } = this.props
     if (this.props.disabled) {
       return
     }
@@ -82,13 +84,18 @@ class PanZoom extends React.Component<Props> {
       return
     }
 
-    this.panning = true
-
     const offset = this.getOffset(e)
+
+    if (preventPan(e, offset.x, offset.y)) {
+      return
+    }
+
     this.mousePos = {
       x: offset.x,
       y: offset.y,
     }
+
+    this.panning = true
 
     this.setMouseListeners()
 
@@ -441,6 +448,8 @@ PanZoom.defaultProps = {
   doubleZoomSpeed: 1.75,
   minZoom: 0,
   maxZoom: Infinity,
+
+  preventPan: () => false,
 }
 
 export default PanZoom

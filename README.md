@@ -55,6 +55,47 @@ render() {
 }
 ```
 
+### Prevent pan
+Sometimes it can be useful to prevent the view from panning, for example if the pan start is done on a clickable element.
+`PanZoom` provides the `preventPan` prop that let you define a function to prevent panning.
+
+e.g. prevent panning when starting the pan on a specific `div`
+```js
+content = null
+
+// preventPan gives access to the event, as well as the 
+// mouse coordinates in the coordinate system of the PanZoom container
+preventPan = (event, x, y) => {
+  // if the target is the content container then prevent panning
+  if (e.target === content) {
+    return true
+  }
+
+  // in the case the target is not the content container
+  // use the coordinates to determine if the click happened
+  // on the content container    
+  const contentRect = content.getBoundingClientRect()
+
+  const x1 = contentRect.left
+  const x2 = contentRect.right
+  const y1 = contentRect.top
+  const y2 = contentRect.bottom
+
+  return (x >= x1 && x <= x2) && (y >= y1 && y <= y2)
+}
+
+render() {
+  return (
+    <PanZoom
+      preventPan={this.preventPan}
+    >
+      <div>{ 'This content can be panned and zoomed' }</div>
+      <div ref={ref => this.content = ref}>{ 'This content can be panned and zoomed only outside of its container' }</div>
+    </PanZoom>
+  )
+}
+```
+
 ## Properties
 |Name|Type|Default|Description|
 |---|---|---|---|
@@ -71,6 +112,7 @@ render() {
 |onPanStart|`func`| |Fired on pan start|
 |onPan|`func`| |Fired on pan|
 |onPanEnd|`func`| |Fired on pan end|
+|preventPan|`func`| |Defines a function to prevent pan|
 |style|`object`| |Override the inline-styles of the root element|
 
 ## Thanks
