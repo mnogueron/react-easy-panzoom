@@ -86,6 +86,7 @@ class PanZoom extends React.Component<Props> {
 
     const offset = this.getOffset(e)
 
+    // check if there is nothing preventing the pan
     if (preventPan(e, offset.x, offset.y)) {
       return
     }
