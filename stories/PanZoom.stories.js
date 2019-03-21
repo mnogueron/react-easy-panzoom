@@ -12,6 +12,8 @@ storiesOf('react-easy-panzoom', module)
       disabled={boolean('Disabled', false)}
       disableKeyInteraction={boolean('Disabled key interaction', false)}
       realPinch={boolean('Enable real pinch', false)}
+      minZoom={0.5}
+      maxZoom={3}
       keyMapping={
         boolean('Enable additional key mapping', false) ?
           {
@@ -23,6 +25,7 @@ storiesOf('react-easy-panzoom', module)
       }
       autoCenterZoomLevel={1}
       autoCenter
+      style={{ overflow: 'hidden', height: 500 }}
     >
       <div style={{ border: 'solid 1px red', padding: 8, left: 6 }}>
         This div can be panned

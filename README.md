@@ -32,7 +32,7 @@ render() {
 ```
 
 ### Key mapping
-`PanZoom` component natively supports keyboard interactions with arrow keys and `-` / `+` keys. This mapping can be extends using `keyMapping` props.
+`PanZoom` component natively supports keyboard interactions with arrow keys and `-` / `+` keys. This mapping can be extends using the `keyMapping` prop.
 
 e.g. Mapping `w`, `a`, `s`, `d`:
 ```js
@@ -66,6 +66,8 @@ render() {
 |disableKeyInteraction|`bool`|false|Disable keyboard interaction|
 |realPinch|`bool`|false|Enable real pinch interaction for touch events|
 |keyMapping|`object`|false|Define specific key mapping for keyboard interaction (e.g. `{ '<keyCode>': { x: 0, y: 1, z: 0 } }`, with `<keyCode>` being the key code to map)|
+|minZoom|`number`| |Sets the minimum zoom value|
+|maxZoom|`number`| |Sets the maximum zoom value|
 |onPanStart|`func`| |Fired on pan start|
 |onPan|`func`| |Fired on pan|
 |onPanEnd|`func`| |Fired on pan end|

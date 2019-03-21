@@ -10,13 +10,14 @@ type Props = {
   disableKeyInteraction?: boolean,
   realPinch?: boolean,
   keyMapping?: { [string]: { x: number, y: number, z: number }},
+  minZoom?: number,
+  maxZoom?: number,
 
   onPanStart?: (any) => void,
   onPan?: (any) => void,
   onPanEnd?: (any) => void,
 }
 
-// TODO support minZoom, maxZoom
 class PanZoom extends React.Component<Props> {
 
   container = null
@@ -36,7 +37,10 @@ class PanZoom extends React.Component<Props> {
   }
 
   componentDidMount(): void {
-    const { autoCenter, autoCenterZoomLevel } = this.props
+    const { autoCenter, autoCenterZoomLevel, minZoom, maxZoom } = this.props
+    if (maxZoom < minZoom) {
+      throw new Error('[PanZoom]: maxZoom props cannot be inferior to minZoom')
+    }
     if (autoCenter) {
       this.autoCenter(autoCenterZoomLevel)
     }
@@ -173,9 +177,7 @@ class PanZoom extends React.Component<Props> {
       }
 
       if (z) {
-        const scaleMultiplier = this.getScaleMultiplier(z)
-        const containerRect = this.container.getBoundingClientRect()
-        this.zoomTo(containerRect.width / 2, containerRect.height / 2, scaleMultiplier)
+        this.centeredZoom(z)
       }
     }
   }
@@ -356,11 +358,42 @@ class PanZoom extends React.Component<Props> {
   }
 
   zoomTo = (x, y, ratio) => {
+    const { minZoom, maxZoom } = this.props
     const { x: transformX, y: transformY, scale } = this.state
-    const newScale = scale * ratio
+
+    let newScale = scale * ratio
+    if (newScale < minZoom) {
+      if (scale === minZoom) {
+        return
+      }
+      ratio = minZoom / scale
+      newScale = minZoom
+    }
+    else if (newScale > maxZoom) {
+      if (scale === maxZoom) {
+        return
+      }
+      ratio = maxZoom / scale
+      newScale = maxZoom
+    }
+
     const newX = x - ratio * (x - transformX)
     const newY = y - ratio * (y - transformY)
     this.setState({ x: newX, y: newY, scale: newScale })
+  }
+
+  centeredZoom = (delta) => {
+    const scaleMultiplier = this.getScaleMultiplier(delta)
+    const containerRect = this.container.getBoundingClientRect()
+    this.zoomTo(containerRect.width / 2, containerRect.height / 2, scaleMultiplier)
+  }
+
+  zoomIn = () => {
+    this.centeredZoom(-1)
+  }
+
+  zoomOut = () => {
+    this.centeredZoom(1)
   }
 
   getOffset = (e) => {
@@ -406,6 +439,8 @@ class PanZoom extends React.Component<Props> {
 PanZoom.defaultProps = {
   zoomSpeed: 1,
   doubleZoomSpeed: 1.75,
+  minZoom: 0,
+  maxZoom: Infinity,
 }
 
 export default PanZoom
