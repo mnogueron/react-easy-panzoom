@@ -4,7 +4,7 @@
 [![npm](https://img.shields.io/npm/v/react-easy-panzoom.svg?maxAge=2592000&style=plastic)](https://www.npmjs.com/package/react-easy-panzoom)
 [![Code](https://img.shields.io/npm/dt/react-easy-panzoom.svg?style=plastic)](https://www.npmjs.com/package/react-easy-panzoom)
 
-React components that enables pan and zoom features for any component.
+React components that enables pan and zoom features for any component. Try out the live demo __[here](https://codesandbox.io/s/ll1xrz9mx9)__
 
 ## Installation
 react-panzoom requires React 16 or later.
