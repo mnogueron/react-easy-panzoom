@@ -69,3 +69,12 @@ storiesOf('react-easy-panzoom', module)
   .add('Prevent pan', () => (
     <PanZoomPreventPan />
   ))
+  .add('No state update on pan', () => (
+    <DefaultPanZoom
+      noStateUpdate={boolean('Disable state update on pan', true)}
+    >
+      <div style={{ border: 'solid 1px red', padding: 8, left: 6 }}>
+        This div can be panned
+      </div>
+    </DefaultPanZoom>
+  ))

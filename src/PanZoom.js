@@ -13,6 +13,7 @@ type Props = {
   minZoom?: number,
   maxZoom?: number,
   preventPan?: (event: SyntheticEvent, x: number, y: number) => boolean,
+  noStateUpdate?: boolean,
 
   onPanStart?: (any) => void,
   onPan?: (any) => void,
@@ -30,6 +31,11 @@ class PanZoom extends React.Component<Props> {
   panStartTriggered = false
 
   pinchZoomLength = 0
+
+  prevPanPosition = {
+    x: 0,
+    y: 0,
+  }
 
   state = {
     x: 0,
@@ -96,6 +102,12 @@ class PanZoom extends React.Component<Props> {
       y: offset.y,
     }
 
+    // keep the current pan value in memory to allow noStateUpdate panning
+    this.prevPanPosition = {
+      x: this.state.x,
+      y: this.state.y,
+    }
+
     this.panning = true
 
     this.setMouseListeners()
@@ -106,6 +118,7 @@ class PanZoom extends React.Component<Props> {
 
   onMouseMove = (e) => {
     if (this.panning) {
+      const { noStateUpdate } = this.props
 
       // TODO disable if using touch event
 
@@ -120,22 +133,21 @@ class PanZoom extends React.Component<Props> {
         y: offset.y,
       }
 
-      this.moveBy(dx, dy)
+      this.moveBy(dx, dy, noStateUpdate)
       this.triggerOnPan(e)
     }
   }
 
   onMouseUp = (e) => {
+    const { noStateUpdate } = this.props
+    if (noStateUpdate) {
+      this.setState(({ x: this.prevPanPosition.x, y: this.prevPanPosition.y }))
+    }
+
     this.triggerOnPanEnd(e)
     this.cleanMouseListeners()
     this.panning = false
     this.releaseTextSelection()
-  }
-
-  // TODO probably add zoom props to stop pan on parent container mouseout
-  onMouseOut = (e) => {
-    this.triggerOnPanEnd(e)
-    this.panning = false
   }
 
   onWheel = (e) => {
@@ -347,18 +359,41 @@ class PanZoom extends React.Component<Props> {
   }
 
   autoCenter = (zoomLevel = 1) => {
+    const { minZoom, maxZoom } = this.props
     const containerRect = this.container.getBoundingClientRect()
     const clientRect = this.dragContainer.getBoundingClientRect()
     const widthRatio = containerRect.width / clientRect.width
     const heightRatio = containerRect.height / clientRect.height
-    const scale = Math.min(widthRatio, heightRatio) * zoomLevel
+    let scale = Math.min(widthRatio, heightRatio) * zoomLevel
+
+    if (scale < minZoom) {
+      console.warn(`[PanZoom]: initial zoomLevel produces a scale inferior to minZoom, reverted to default: ${minZoom}. Consider using a zoom level > ${minZoom}`)
+      scale = minZoom
+    }
+    else if (scale > maxZoom) {
+      console.warn(`[PanZoom]: initial zoomLevel produces a scale superior to maxZoom, reverted to default: ${maxZoom}. Consider using a zoom level < ${maxZoom}`)
+      scale = maxZoom
+    }
+
     const x = (containerRect.width - (clientRect.width * scale)) / 2
     const y = (containerRect.height - (clientRect.height * scale)) / 2
     this.setState({ x, y, scale })
   }
 
-  moveBy = (dx, dy) => {
-    this.setState(({ x: this.state.x + dx, y: this.state.y + dy }))
+  moveBy = (dx, dy, noStateUpdate) => {
+    const { scale, x, y } = this.state
+
+    // Allow better performance by not updating the state on every change
+    if (noStateUpdate) {
+      this.prevPanPosition = {
+        x: this.prevPanPosition.x + dx,
+        y: this.prevPanPosition.y + dy,
+      }
+      this.dragContainer.style.transform = `matrix(${scale}, 0, 0, ${scale}, ${this.prevPanPosition.x}, ${this.prevPanPosition.y})`
+      return
+    }
+
+    this.setState(({ x: x + dx, y: y + dy }))
   }
 
   zoomAbs = (x, y, zoomLevel) => {
