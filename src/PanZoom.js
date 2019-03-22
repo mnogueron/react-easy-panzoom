@@ -504,6 +504,7 @@ PanZoom.defaultProps = {
   doubleZoomSpeed: 1.75,
   minZoom: 0,
   maxZoom: Infinity,
+  noStateUpdate: true,
 
   preventPan: () => false,
 }

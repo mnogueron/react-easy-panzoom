@@ -108,6 +108,7 @@ render() {
 |keyMapping|`object`|false|Define specific key mapping for keyboard interaction (e.g. `{ '<keyCode>': { x: 0, y: 1, z: 0 } }`, with `<keyCode>` being the key code to map)|
 |minZoom|`number`| |Sets the minimum zoom value|
 |maxZoom|`number`| |Sets the maximum zoom value|
+|noStateUpdate|`bool`|true|Disable state update for each new x,y,z transform value while panning. Enabling it while drastically increase the performances |
 |onPanStart|`func`| |Fired on pan start|
 |onPan|`func`| |Fired on pan|
 |onPanEnd|`func`| |Fired on pan end|

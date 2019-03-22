@@ -23,6 +23,7 @@ const DefaultPanZoom = (props) => (
     }
     autoCenterZoomLevel={1}
     autoCenter
+    noStateUpdate={false}
     style={{ overflow: 'hidden', height: 500 }}
     {...props}
   />
