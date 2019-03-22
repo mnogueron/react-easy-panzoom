@@ -139,10 +139,8 @@ class PanZoom extends React.Component<Props> {
   }
 
   onMouseUp = (e) => {
-    const { noStateUpdate } = this.props
-    if (noStateUpdate) {
-      this.setState(({ x: this.prevPanPosition.x, y: this.prevPanPosition.y }))
-    }
+    // if using noStateUpdate we still need to set the new values in the state
+    this.dispatchStateUpdateIfNeeded()
 
     this.triggerOnPanEnd(e)
     this.cleanMouseListeners()
@@ -212,6 +210,12 @@ class PanZoom extends React.Component<Props> {
         y: offset.y,
       }
 
+      // keep the current pan value in memory to allow noStateUpdate panning
+      this.prevPanPosition = {
+        x: this.state.x,
+        y: this.state.y,
+      }
+
       this.touchInProgress = true
       this.setTouchListeners()
     } else if (e.touches.length === 2) {
@@ -223,11 +227,12 @@ class PanZoom extends React.Component<Props> {
   }
 
   onToucheMove = (e) => {
-    const { realPinch } = this.props
+    const { realPinch, noStateUpdate } = this.props
     if (e.touches.length === 1) {
       e.stopPropagation()
       const touch = e.touches[0]
       const offset = this.getOffset(touch)
+
       const dx = offset.x - this.mousePos.x
       const dy = offset.y - this.mousePos.y
 
@@ -240,7 +245,7 @@ class PanZoom extends React.Component<Props> {
         y: offset.y,
       }
 
-      this.moveBy(dx, dy)
+      this.moveBy(dx, dy, noStateUpdate)
       this.triggerOnPan(e)
     } else if (e.touches.length === 2) {
       const finger1 = e.touches[0]
@@ -268,21 +273,36 @@ class PanZoom extends React.Component<Props> {
       this.zoomTo(this.mousePos.x, this.mousePos.y, scaleMultiplier)
       this.pinchZoomLength = currentPinZoomLength
       e.stopPropagation()
-      e.preventDefault()
     }
   }
 
   onTouchEnd = (e) => {
-    if (e.touches.length === 0) {
+    if (e.touches.length > 0) {
       const offset = this.getOffset(e.touches[0])
       this.mousePos = {
         x: offset.x,
         y: offset.y,
       }
+
+      // when removing a finger we don't go through onTouchStart
+      // thus we need to set the prevPanPosition here
+      this.prevPanPosition = {
+        x: this.state.x,
+        y: this.state.y,
+      }
     } else {
+      this.dispatchStateUpdateIfNeeded()
       this.touchInProgress = false
+
       this.triggerOnPanEnd(e)
       this.cleanTouchListeners()
+    }
+  }
+
+  dispatchStateUpdateIfNeeded = () => {
+    const { noStateUpdate } = this.props
+    if (noStateUpdate) {
+      this.setState(({ x: this.prevPanPosition.x, y: this.prevPanPosition.y }))
     }
   }
 
