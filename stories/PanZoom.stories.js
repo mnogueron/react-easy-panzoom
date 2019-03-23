@@ -2,11 +2,18 @@ import React, { useRef } from 'react'
 
 import { storiesOf } from '@storybook/react'
 import { withKnobs, boolean } from '@storybook/addon-knobs';
+import ControllerUI from './ControllerUI'
 import PanZoom from '../src/PanZoom'
+
+const Box = ({ children }) => (
+  <div style={{ border: 'solid 1px red', padding: 8, left: 6 }}>
+    {children}
+  </div>
+)
 
 const DefaultPanZoom = (props) => (
   <PanZoom
-    style={{ border: 'solid 1px green', height: 500 }}
+    style={{ border: 'solid 1px green', height: 500, overflow: 'hidden' }}
     disabled={boolean('Disabled', false)}
     disableKeyInteraction={boolean('Disabled key interaction', false)}
     realPinch={boolean('Enable real pinch', false)}
@@ -24,11 +31,9 @@ const DefaultPanZoom = (props) => (
     autoCenterZoomLevel={1}
     autoCenter
     noStateUpdate={false}
-    style={{ overflow: 'hidden', height: 500 }}
     {...props}
   />
 )
-
 
 const PanZoomPreventPan = () => {
 
@@ -51,10 +56,46 @@ const PanZoomPreventPan = () => {
 
   return (
     <DefaultPanZoom preventPan={preventPan}>
-      <div ref={content} style={{ border: 'solid 1px red', padding: 8, left: 6 }}>
+      <Box>
         This div can be panned only from the outside
-      </div>
+      </Box>
     </DefaultPanZoom>
+  )
+}
+
+const PanZoomControlUI = () => {
+  const panZoom = useRef(null)
+
+  function onZoomIn() {
+    panZoom.current && panZoom.current.zoomIn()
+  }
+
+  function onZoomOut() {
+    panZoom.current && panZoom.current.zoomOut()
+  }
+
+  return (
+    <div style={{ position: 'relative' }}>
+      <div style={{ position: 'absolute', left: 8, top: 8 }}>
+        <ControllerUI
+          onZoomIn={onZoomIn}
+          onZoomOut={onZoomOut}
+        />
+      </div>
+      <PanZoom
+        ref={panZoom}
+        style={{ border: 'solid 1px green', height: 500, overflow: 'hidden' }}
+        disableKeyInteraction={boolean('Disabled key interaction', false)}
+        realPinch={boolean('Enable real pinch', false)}
+        minZoom={0.5}
+        maxZoom={3}
+        autoCenter
+      >
+        <Box>
+          This div can be panned
+        </Box>
+      </PanZoom>
+    </div>
   )
 }
 
@@ -62,9 +103,9 @@ storiesOf('react-easy-panzoom', module)
   .addDecorator(withKnobs)
   .add('Basic', () => (
     <DefaultPanZoom>
-      <div style={{ border: 'solid 1px red', padding: 8, left: 6 }}>
+      <Box>
         This div can be panned
-      </div>
+      </Box>
     </DefaultPanZoom>
   ))
   .add('Prevent pan', () => (
@@ -74,8 +115,11 @@ storiesOf('react-easy-panzoom', module)
     <DefaultPanZoom
       noStateUpdate={boolean('Disable state update on pan', true)}
     >
-      <div style={{ border: 'solid 1px red', padding: 8, left: 6 }}>
+      <Box>
         This div can be panned
-      </div>
+      </Box>
     </DefaultPanZoom>
+  ))
+  .add('Control UI', () => (
+    <PanZoomControlUI />
   ))

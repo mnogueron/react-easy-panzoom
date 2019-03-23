@@ -54,6 +54,7 @@
     "flow-bin": "^0.95.1",
     "react": "^16.8.4",
     "react-dom": "^16.8.4",
+    "react-jss": "^8.6.1",
     "terser-webpack-plugin": "^1.2.3",
     "webpack": "^4.29.6",
     "webpack-cli": "^3.3.0",
