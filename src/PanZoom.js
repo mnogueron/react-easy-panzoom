@@ -201,10 +201,16 @@ class PanZoom extends React.Component<Props> {
   }
 
   onTouchStart = (e) => {
+    const { preventPan } = this.props
     if (e.touches.length === 1) {
       // Drag
       const touch = e.touches[0]
       const offset = this.getOffset(touch)
+
+      if (preventPan(e, offset.x, offset.y)) {
+        return
+      }
+
       this.mousePos = {
         x: offset.x,
         y: offset.y,
