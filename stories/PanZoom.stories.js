@@ -15,20 +15,8 @@ const Box = ({ children }) => (
 const DefaultPanZoom = (props) => (
   <PanZoom
     style={{ border: 'solid 1px green', height: 500, overflow: 'hidden' }}
-    disabled={boolean('Disabled', false)}
-    disableKeyInteraction={boolean('Disabled key interaction', false)}
-    realPinch={boolean('Enable real pinch', false)}
     minZoom={0.5}
     maxZoom={3}
-    keyMapping={
-      boolean('Enable additional key mapping', false) ?
-        {
-          '87': { x: 0, y: -1, z: 0 },
-          '83': { x: 0, y: 1, z: 0 },
-          '65': { x: -1, y: 0, z: 0 },
-          '68': { x: 1, y: 0, z: 0 },
-        } : {}
-    }
     autoCenterZoomLevel={1}
     autoCenter
     noStateUpdate={false}
@@ -64,7 +52,7 @@ const PanZoomPreventPan = () => {
   )
 }
 
-const PanZoomControlUI = () => {
+const PanZoomControlUI = (props) => {
   const panZoom = useRef(null)
 
   function onZoomIn() {
@@ -84,11 +72,10 @@ const PanZoomControlUI = () => {
       <PanZoom
         ref={panZoom}
         style={{ border: 'solid 1px green', height: 500, overflow: 'hidden' }}
-        disableKeyInteraction={boolean('Disabled key interaction', false)}
-        realPinch={boolean('Enable real pinch', false)}
         minZoom={0.5}
         maxZoom={3}
         autoCenter
+        {...props}
       >
         <Box>
           This div can be panned
@@ -110,7 +97,20 @@ const PanZoomControlUI = () => {
 storiesOf('react-easy-panzoom', module)
   .addDecorator(withKnobs)
   .add('Basic', () => (
-    <DefaultPanZoom>
+    <DefaultPanZoom
+      disabled={boolean('Disabled', false)}
+      disableKeyInteraction={boolean('Disabled key interaction', false)}
+      realPinch={boolean('Enable real pinch', false)}
+      keyMapping={
+        boolean('Enable additional key mapping', false) ?
+          {
+            '87': { x: 0, y: -1, z: 0 },
+            '83': { x: 0, y: 1, z: 0 },
+            '65': { x: -1, y: 0, z: 0 },
+            '68': { x: 1, y: 0, z: 0 },
+          } : {}
+      }
+    >
       <Box>
         This div can be panned
       </Box>
@@ -129,5 +129,8 @@ storiesOf('react-easy-panzoom', module)
     </DefaultPanZoom>
   ))
   .add('Control UI', () => (
-    <PanZoomControlUI />
+    <PanZoomControlUI
+      disableKeyInteraction={boolean('Disabled key interaction', false)}
+      realPinch={boolean('Enable real pinch', false)}
+    />
   ))
