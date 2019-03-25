@@ -121,6 +121,19 @@ render() {
 |preventPan|`func`| |Defines a function to prevent pan|
 |style|`object`| |Override the inline-styles of the root element|
 
+## Methods
+By using `ref`, methods from `PanZoom` can be accessed and called to trigger manipulation functions.
+
+Available methods are listed below:
+
+|Name|Parameters|Description|
+|---|---|---|
+|zoomIn| |Zoom in from the center of the `PanZoom` container|
+|zoomOut| |Zoom out from the center of the `PanZoom` container|
+|autoCenter| |Center and resize the view to fit the `PanZoom` container|
+|reset| |Reset the view to it's original state (will not auto center if `autoCenter` is enabled)|
+|moveByRatio|`(x: number, y: number, moveSpeedRatio?: number)`|Move the view along `x` or/and `y` axis|
+
 ## Thanks
 This react library is based on the awesome [panzoom][panzoom] by @anvaka. 
 
