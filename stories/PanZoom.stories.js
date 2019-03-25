@@ -2,8 +2,9 @@ import React, { useRef } from 'react'
 
 import { storiesOf } from '@storybook/react'
 import { withKnobs, boolean } from '@storybook/addon-knobs';
-import ZoomControllerUI from './ZoomControllerUI'
-import PadControllerUI from './PadControllerUI'
+import ZoomControllerUI from './ControllerUI/ZoomControllerUI'
+import PadControllerUI from './ControllerUI/PadControllerUI'
+import ResetControllerUI from './ControllerUI/ResetControllerUI'
 import PanZoom from '../src/PanZoom'
 
 const Box = ({ children }) => (
@@ -67,6 +68,14 @@ const PanZoomControlUI = (props) => {
     panZoom.current && panZoom.current.moveByRatio(x, y)
   }
 
+  function center() {
+    panZoom.current && panZoom.current.autoCenter()
+  }
+
+  function reset() {
+    panZoom.current && panZoom.current.reset()
+  }
+
   return (
     <div style={{ position: 'relative' }}>
       <PanZoom
@@ -87,6 +96,14 @@ const PanZoomControlUI = (props) => {
           onZoomOut={onZoomOut}
         />
       </div>
+
+      <div style={{ position: 'absolute', left: 8, bottom: 8 }}>
+        <ResetControllerUI
+          reset={reset}
+          center={center}
+        />
+      </div>
+
       <div style={{ position: 'absolute', right: 8, bottom: 8 }}>
         <PadControllerUI moveByRatio={moveByRatio}/>
       </div>

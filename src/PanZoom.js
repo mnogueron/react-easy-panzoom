@@ -466,6 +466,10 @@ class PanZoom extends React.Component<Props> {
     this.zoomTo(containerRect.width / 2, containerRect.height / 2, scaleMultiplier)
   }
 
+  reset = () => {
+    this.setState({ x: 0, y: 0, scale: 1 })
+  }
+
   zoomIn = () => {
     this.centeredZoom(-1)
   }
