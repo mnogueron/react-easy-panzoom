@@ -11,6 +11,10 @@ const styles = {
     textAlign: 'center',
     userSelect: 'none',
 
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+
     '&:hover': {
       backgroundColor: '#f4f4f4',
     },

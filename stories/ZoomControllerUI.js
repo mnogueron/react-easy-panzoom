@@ -1,12 +1,14 @@
 import * as React from 'react'
 import Button from './Button'
 
-const ControllerUi = ({ onZoomIn, onZoomOut }) => {
+const ZoomControllerUI = ({ onZoomIn, onZoomOut }) => {
   return (
     <div
       style={{
         border: '2px solid rgba(0,0,0,0.2)',
         borderRadius: 4,
+        overflow: 'hidden',
+        backgroundColor: 'white',
       }}
     >
       <Button
@@ -15,13 +17,13 @@ const ControllerUi = ({ onZoomIn, onZoomOut }) => {
           borderBottom: '1px solid #ccc',
         }}
       >
-        {'+'}
+        <i className="material-icons">add</i>
       </Button>
       <Button onClick={onZoomOut}>
-        {'-'}
+        <i className="material-icons">remove</i>
       </Button>
     </div>
   )
 }
 
-export default ControllerUi
+export default ZoomControllerUI

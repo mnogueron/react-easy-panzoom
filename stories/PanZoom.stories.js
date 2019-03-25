@@ -2,7 +2,8 @@ import React, { useRef } from 'react'
 
 import { storiesOf } from '@storybook/react'
 import { withKnobs, boolean } from '@storybook/addon-knobs';
-import ControllerUI from './ControllerUI'
+import ZoomControllerUI from './ZoomControllerUI'
+import PadControllerUI from './PadControllerUI'
 import PanZoom from '../src/PanZoom'
 
 const Box = ({ children }) => (
@@ -74,14 +75,12 @@ const PanZoomControlUI = () => {
     panZoom.current && panZoom.current.zoomOut()
   }
 
+  function moveByRatio(x, y) {
+    panZoom.current && panZoom.current.moveByRatio(x, y)
+  }
+
   return (
     <div style={{ position: 'relative' }}>
-      <div style={{ position: 'absolute', left: 8, top: 8 }}>
-        <ControllerUI
-          onZoomIn={onZoomIn}
-          onZoomOut={onZoomOut}
-        />
-      </div>
       <PanZoom
         ref={panZoom}
         style={{ border: 'solid 1px green', height: 500, overflow: 'hidden' }}
@@ -95,6 +94,15 @@ const PanZoomControlUI = () => {
           This div can be panned
         </Box>
       </PanZoom>
+      <div style={{ position: 'absolute', left: 8, top: 8, zIndex: 1 }}>
+        <ZoomControllerUI
+          onZoomIn={onZoomIn}
+          onZoomOut={onZoomOut}
+        />
+      </div>
+      <div style={{ position: 'absolute', right: 8, bottom: 8 }}>
+        <PadControllerUI moveByRatio={moveByRatio}/>
+      </div>
     </div>
   )
 }

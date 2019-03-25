@@ -406,6 +406,15 @@ class PanZoom extends React.Component<Props> {
     this.setState({ x, y, scale })
   }
 
+  moveByRatio = (x, y, moveSpeedRatio = 0.05) => {
+    const containerRect = this.container.getBoundingClientRect()
+    const offset = Math.min(containerRect.width, containerRect.height)
+    const dx = offset * moveSpeedRatio * x
+    const dy = offset * moveSpeedRatio * y
+
+    this.moveBy(dx, dy)
+  }
+
   moveBy = (dx, dy, noStateUpdate) => {
     const { scale, x, y } = this.state
 
