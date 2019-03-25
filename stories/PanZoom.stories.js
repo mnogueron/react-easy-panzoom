@@ -47,9 +47,9 @@ const PanZoomPreventPan = () => {
 
   return (
     <DefaultPanZoom preventPan={preventPan}>
-      <Box>
+      <div ref={content} style={{ border: 'solid 1px red', padding: 8, left: 6 }}>
         This div can be panned only from the outside
-      </Box>
+      </div>
     </DefaultPanZoom>
   )
 }
