@@ -6,6 +6,7 @@ import ZoomControllerUI from './ControllerUI/ZoomControllerUI'
 import PadControllerUI from './ControllerUI/PadControllerUI'
 import ResetControllerUI from './ControllerUI/ResetControllerUI'
 import PanZoom from '../src/PanZoom'
+import ContentBox from './ContentBox'
 
 const Box = ({ children }) => (
   <div style={{ border: 'solid 1px red', padding: 8, left: 6 }}>
@@ -140,9 +141,7 @@ storiesOf('react-easy-panzoom', module)
     <DefaultPanZoom
       noStateUpdate={boolean('Disable state update on pan', true)}
     >
-      <Box>
-        This div can be panned
-      </Box>
+      <ContentBox />
     </DefaultPanZoom>
   ))
   .add('Control UI', () => (
