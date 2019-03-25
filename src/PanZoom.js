@@ -386,13 +386,12 @@ class PanZoom extends React.Component<Props> {
 
   autoCenter = (zoomLevel = 1) => {
     const { minZoom, maxZoom } = this.props
+    const { scale: prevScale } = this.state
     const containerRect = this.container.getBoundingClientRect()
     const clientRect = this.dragContainer.getBoundingClientRect()
     const widthRatio = containerRect.width / clientRect.width
     const heightRatio = containerRect.height / clientRect.height
-    let scale = Math.min(widthRatio, heightRatio) * zoomLevel * this.state.scale
-
-    debugger
+    let scale = Math.min(widthRatio, heightRatio) * zoomLevel * prevScale
 
     if (scale < minZoom) {
       console.warn(`[PanZoom]: initial zoomLevel produces a scale inferior to minZoom, reverted to default: ${minZoom}. Consider using a zoom level > ${minZoom}`)
@@ -403,8 +402,8 @@ class PanZoom extends React.Component<Props> {
       scale = maxZoom
     }
 
-    const x = (containerRect.width - (clientRect.width * scale)) / 2
-    const y = (containerRect.height - (clientRect.height * scale)) / 2
+    const x = (containerRect.width - (clientRect.width/prevScale * scale)) / 2
+    const y = (containerRect.height - (clientRect.height/prevScale * scale)) / 2
     this.setState({ x, y, scale })
   }
 
