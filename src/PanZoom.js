@@ -390,7 +390,9 @@ class PanZoom extends React.Component<Props> {
     const clientRect = this.dragContainer.getBoundingClientRect()
     const widthRatio = containerRect.width / clientRect.width
     const heightRatio = containerRect.height / clientRect.height
-    let scale = Math.min(widthRatio, heightRatio) * zoomLevel
+    let scale = Math.min(widthRatio, heightRatio) * zoomLevel * this.state.scale
+
+    debugger
 
     if (scale < minZoom) {
       console.warn(`[PanZoom]: initial zoomLevel produces a scale inferior to minZoom, reverted to default: ${minZoom}. Consider using a zoom level > ${minZoom}`)
