@@ -87,10 +87,9 @@ const PanZoomControlUI = (props) => {
         autoCenter
         {...props}
       >
-        <Box>
-          This div can be panned
-        </Box>
+        <ContentBox />
       </PanZoom>
+
       <div style={{ position: 'absolute', left: 8, top: 8, zIndex: 1 }}>
         <ZoomControllerUI
           onZoomIn={onZoomIn}
@@ -141,7 +140,9 @@ storiesOf('react-easy-panzoom', module)
     <DefaultPanZoom
       noStateUpdate={boolean('Disable state update on pan', true)}
     >
-      <ContentBox />
+      <Box>
+        This div can be panned
+      </Box>
     </DefaultPanZoom>
   ))
   .add('Control UI', () => (

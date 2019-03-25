@@ -7,6 +7,10 @@ const styles = {
     display: 'inline-block',
   },
   image: {
+    backgroundImage: `url(${Landscape})`,
+    backgroundRepeat: 'no-repeat',
+    backgroundSize: 'cover',
+    height: 300,
     width: 500,
     userDrag: 'none',
   },
@@ -25,7 +29,7 @@ const styles = {
 const ContentBox = ({ classes }) => {
   return (
     <div className={classes.root}>
-      <img src={Landscape} className={classes.image} />
+      <div className={classes.image} />
       <div className={classes.button}>Button</div>
     </div>
   )
