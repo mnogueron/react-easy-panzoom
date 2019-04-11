@@ -4,7 +4,7 @@
 [![npm](https://img.shields.io/npm/v/react-easy-panzoom.svg?style=plastic)](https://www.npmjs.com/package/react-easy-panzoom)
 [![Code](https://img.shields.io/npm/dt/react-easy-panzoom.svg?style=plastic)](https://www.npmjs.com/package/react-easy-panzoom)
 
-<img src="https://github.com/mnogueron/react-easy-panzoom/blob/master/react-easy-panzoom-codepen.gif" width="500" height="390" />
+![react-easy-panzoom-demo](https://user-images.githubusercontent.com/8511318/55997819-2ff98700-5cbc-11e9-99f5-67ea295f4f92.gif)
 
 React components that enables pan and zoom features for any component. Try out the live demo __[here](https://codesandbox.io/s/ll1xrz9mx9)__
 
