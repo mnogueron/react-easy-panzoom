@@ -436,6 +436,9 @@ class PanZoom extends React.Component<Props> {
     // Allow better performance by not updating the state on every change
     if (noStateUpdate) {
       const { boundX, boundY } = this.getBoundCoordinates(this.prevPanPosition.x + dx, this.prevPanPosition.y + dy, scale)
+
+      this.dragContainer.style.transform = `matrix(${scale}, 0, 0, ${scale}, ${this.prevPanPosition.x + (this.prevPanPosition.x - boundX) / 2}, ${this.prevPanPosition.y + (this.prevPanPosition.y - boundY) / 2})`
+
       this.prevPanPosition = {
         x: boundX,
         y: boundY,
@@ -578,6 +581,7 @@ class PanZoom extends React.Component<Props> {
             transformOrigin: '0 0 0',
             transform: `matrix(${scale}, 0, 0, ${scale}, ${x}, ${y})`,
             transition: 'all 0.05s linear',
+            willChange: 'transform',
           }}
         >
           {children}
