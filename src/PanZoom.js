@@ -38,8 +38,10 @@ class PanZoom extends React.Component<Props> {
   }
 
   frameAnimation = null
+  intermediaryFrameAnimation = null
 
   transform = null
+  intermediaryTransform = null
 
   state = {
     x: 0,
@@ -329,6 +331,11 @@ class PanZoom extends React.Component<Props> {
       window.cancelAnimationFrame(this.frameAnimation)
       this.frameAnimation = 0
     }
+
+    if (this.intermediaryFrameAnimation) {
+      window.cancelAnimationFrame(this.intermediaryFrameAnimation)
+      this.intermediaryFrameAnimation = 0
+    }
   }
 
   setTouchListeners = () => {
@@ -345,6 +352,11 @@ class PanZoom extends React.Component<Props> {
     if (this.frameAnimation) {
       window.cancelAnimationFrame(this.frameAnimation)
       this.frameAnimation = 0
+    }
+
+    if (this.intermediaryFrameAnimation) {
+      window.cancelAnimationFrame(this.intermediaryFrameAnimation)
+      this.intermediaryFrameAnimation = 0
     }
   }
 
@@ -437,16 +449,16 @@ class PanZoom extends React.Component<Props> {
     if (noStateUpdate) {
       const { boundX, boundY } = this.getBoundCoordinates(this.prevPanPosition.x + dx, this.prevPanPosition.y + dy, scale)
 
-      this.dragContainer.style.transform = `matrix(${scale}, 0, 0, ${scale}, ${this.prevPanPosition.x + (this.prevPanPosition.x - boundX) / 2}, ${this.prevPanPosition.y + (this.prevPanPosition.y - boundY) / 2})`
+      this.intermediaryTransform = `matrix(${scale}, 0, 0, ${scale}, ${this.prevPanPosition.x + (this.prevPanPosition.x - boundX) / 2}, ${this.prevPanPosition.y + (this.prevPanPosition.y - boundY) / 2})`
+      this.intermediaryFrameAnimation = window.requestAnimationFrame(this.applyIntermediaryTransform)
 
       this.prevPanPosition = {
         x: boundX,
         y: boundY,
       }
 
-      this.frameAnimation = window.requestAnimationFrame(this.applyTransform)
-
       this.transform = `matrix(${scale}, 0, 0, ${scale}, ${this.prevPanPosition.x}, ${this.prevPanPosition.y})`
+      this.frameAnimation = window.requestAnimationFrame(this.applyTransform)
       //this.dragContainer.style.transform = `matrix(${scale}, 0, 0, ${scale}, ${this.prevPanPosition.x}, ${this.prevPanPosition.y})`
       return
     }
@@ -514,6 +526,11 @@ class PanZoom extends React.Component<Props> {
   applyTransform = () => {
     this.dragContainer.style.transform = this.transform
     this.frameAnimation = 0
+  }
+
+  applyIntermediaryTransform = () => {
+    this.dragContainer.style.transform = this.intermediaryTransform
+    this.intermediaryFrameAnimation = 0
   }
 
   getBoundCoordinates = (x, y, newScale) => {
