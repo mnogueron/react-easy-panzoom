@@ -37,6 +37,10 @@ class PanZoom extends React.Component<Props> {
     y: 0,
   }
 
+  frameAnimation = null
+
+  transform = null
+
   state = {
     x: 0,
     y: 0,
@@ -320,6 +324,11 @@ class PanZoom extends React.Component<Props> {
   cleanMouseListeners = () => {
     document.removeEventListener('mousemove', this.onMouseMove)
     document.removeEventListener('mouseup', this.onMouseUp)
+
+    if (this.frameAnimation) {
+      window.cancelAnimationFrame(this.frameAnimation)
+      this.frameAnimation = 0
+    }
   }
 
   setTouchListeners = () => {
@@ -332,6 +341,11 @@ class PanZoom extends React.Component<Props> {
     document.removeEventListener('touchmove', this.onToucheMove)
     document.removeEventListener('touchend', this.onTouchEnd)
     document.removeEventListener('touchcancel', this.onTouchEnd)
+
+    if (this.frameAnimation) {
+      window.cancelAnimationFrame(this.frameAnimation)
+      this.frameAnimation = 0
+    }
   }
 
   preventDefault = (e) => {
@@ -426,7 +440,11 @@ class PanZoom extends React.Component<Props> {
         x: boundX,
         y: boundY,
       }
-      this.dragContainer.style.transform = `matrix(${scale}, 0, 0, ${scale}, ${this.prevPanPosition.x}, ${this.prevPanPosition.y})`
+
+      this.frameAnimation = window.requestAnimationFrame(this.applyTransform)
+
+      this.transform = `matrix(${scale}, 0, 0, ${scale}, ${this.prevPanPosition.x}, ${this.prevPanPosition.y})`
+      //this.dragContainer.style.transform = `matrix(${scale}, 0, 0, ${scale}, ${this.prevPanPosition.x}, ${this.prevPanPosition.y})`
       return
     }
 
@@ -488,6 +506,11 @@ class PanZoom extends React.Component<Props> {
     const offsetX = e.clientX - containerRect.left
     const offsetY = e.clientY - containerRect.top
     return { x: offsetX, y: offsetY }
+  }
+
+  applyTransform = () => {
+    this.dragContainer.style.transform = this.transform
+    this.frameAnimation = 0
   }
 
   getBoundCoordinates = (x, y, newScale) => {
