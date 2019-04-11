@@ -1,7 +1,7 @@
 import React, { useRef } from 'react'
 
 import { storiesOf } from '@storybook/react'
-import { withKnobs, boolean } from '@storybook/addon-knobs';
+import { withKnobs, boolean, number } from '@storybook/addon-knobs';
 import ZoomControllerUI from './ControllerUI/ZoomControllerUI'
 import PadControllerUI from './ControllerUI/PadControllerUI'
 import ResetControllerUI from './ControllerUI/ResetControllerUI'
@@ -138,7 +138,20 @@ storiesOf('react-easy-panzoom', module)
   ))
   .add('No state update on pan', () => (
     <DefaultPanZoom
+      maxZoom={Infinity}
       noStateUpdate={boolean('Disable state update on pan', true)}
+    >
+      <Box>
+        This div can be panned
+      </Box>
+    </DefaultPanZoom>
+  ))
+  .add('Bounding box', () => (
+    <DefaultPanZoom
+      maxZoom={Infinity}
+      boundaryRatioHorizontal={number('Horizontal boundary ratio', 0.8, { range: true, min: -1, max: 2, step: 0.1 })}
+      boundaryRatioVertical={number('Vertical boundary ratio', 0.8, { range: true, min: -1, max: 2, step: 0.1 })}
+      enableBoundingBox
     >
       <Box>
         This div can be panned

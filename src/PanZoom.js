@@ -421,15 +421,17 @@ class PanZoom extends React.Component<Props> {
 
     // Allow better performance by not updating the state on every change
     if (noStateUpdate) {
+      const { boundX, boundY } = this.getBoundCoordinates(this.prevPanPosition.x + dx, this.prevPanPosition.y + dy, scale)
       this.prevPanPosition = {
-        x: this.prevPanPosition.x + dx,
-        y: this.prevPanPosition.y + dy,
+        x: boundX,
+        y: boundY,
       }
       this.dragContainer.style.transform = `matrix(${scale}, 0, 0, ${scale}, ${this.prevPanPosition.x}, ${this.prevPanPosition.y})`
       return
     }
 
-    this.setState(({ x: x + dx, y: y + dy }))
+    const { boundX, boundY } = this.getBoundCoordinates(x + dx, y + dy, scale)
+    this.setState(({ x: boundX, y: boundY}))
   }
 
   zoomAbs = (x, y, zoomLevel) => {
@@ -458,7 +460,9 @@ class PanZoom extends React.Component<Props> {
 
     const newX = x - ratio * (x - transformX)
     const newY = y - ratio * (y - transformY)
-    this.setState({ x: newX, y: newY, scale: newScale })
+
+    const { boundX, boundY } = this.getBoundCoordinates(newX, newY, scale)
+    this.setState({ x: boundX, y: boundY, scale: newScale })
   }
 
   centeredZoom = (delta) => {
@@ -484,6 +488,46 @@ class PanZoom extends React.Component<Props> {
     const offsetX = e.clientX - containerRect.left
     const offsetY = e.clientY - containerRect.top
     return { x: offsetX, y: offsetY }
+  }
+
+  getBoundCoordinates = (x, y, newScale) => {
+    const { enableBoundingBox, boundaryRatioVertical, boundaryRatioHorizontal } = this.props
+    const { scale } = this.state
+
+    if (!enableBoundingBox) {
+      return {
+        boundX: x,
+        boundY: y,
+      }
+    }
+
+    const containerRect = this.container.getBoundingClientRect()
+    const clientRect = this.dragContainer.getBoundingClientRect()
+    let width = clientRect.width
+    let height = clientRect.height
+
+    if (newScale) {
+      width *= (scale / newScale)
+      height *= (scale / newScale)
+    }
+
+    let boundX = x
+    let boundY = y
+    if (boundY < -boundaryRatioVertical * height) {
+      boundY = -boundaryRatioVertical * height
+    }
+    else if (boundY > containerRect.height - (1 - boundaryRatioVertical) * height) {
+      boundY = containerRect.height - (1 - boundaryRatioVertical) * height
+    }
+
+    if (boundX < -boundaryRatioHorizontal * width) {
+      boundX = -boundaryRatioHorizontal * width
+    }
+    else if (boundX > containerRect.width - (1 - boundaryRatioHorizontal) * width) {
+      boundX = containerRect.width - (1 - boundaryRatioHorizontal) * width
+    }
+
+    return { boundX, boundY }
   }
 
   render() {
@@ -526,6 +570,8 @@ PanZoom.defaultProps = {
   minZoom: 0,
   maxZoom: Infinity,
   noStateUpdate: true,
+  boundaryRatioVertical: 0.8,
+  boundaryRatioHorizontal: 0.8,
 
   preventPan: () => false,
 }
