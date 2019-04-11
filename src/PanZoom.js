@@ -40,8 +40,8 @@ class PanZoom extends React.Component<Props> {
   frameAnimation = null
   intermediaryFrameAnimation = null
 
-  transform = null
-  intermediaryTransform = null
+  oldTransform = null
+  newTransform = null
 
   state = {
     x: 0,
@@ -449,7 +449,9 @@ class PanZoom extends React.Component<Props> {
     if (noStateUpdate) {
       const { boundX, boundY } = this.getBoundCoordinates(this.prevPanPosition.x + dx, this.prevPanPosition.y + dy, scale)
 
-      this.intermediaryTransform = `matrix(${scale}, 0, 0, ${scale}, ${this.prevPanPosition.x + (this.prevPanPosition.x - boundX) / 2}, ${this.prevPanPosition.y + (this.prevPanPosition.y - boundY) / 2})`
+      this.oldTransform = { x, y, scale }
+      this.newTransform = { x: boundX, y: boundY, scale }
+
       this.intermediaryFrameAnimation = window.requestAnimationFrame(this.applyIntermediaryTransform)
 
       this.prevPanPosition = {
@@ -457,9 +459,7 @@ class PanZoom extends React.Component<Props> {
         y: boundY,
       }
 
-      this.transform = `matrix(${scale}, 0, 0, ${scale}, ${this.prevPanPosition.x}, ${this.prevPanPosition.y})`
       this.frameAnimation = window.requestAnimationFrame(this.applyTransform)
-      //this.dragContainer.style.transform = `matrix(${scale}, 0, 0, ${scale}, ${this.prevPanPosition.x}, ${this.prevPanPosition.y})`
       return
     }
 
@@ -524,12 +524,15 @@ class PanZoom extends React.Component<Props> {
   }
 
   applyTransform = () => {
-    this.dragContainer.style.transform = this.transform
+    const { x, y, scale } = this.newTransform
+    this.dragContainer.style.transform = `matrix(${scale}, 0, 0, ${scale}, ${x}, ${y})`
     this.frameAnimation = 0
   }
 
   applyIntermediaryTransform = () => {
-    this.dragContainer.style.transform = this.intermediaryTransform
+    const { x: oldX, y: oldY, scale: oldScale } = this.oldTransform
+    const { x: newX, y: newY, scale: newScale } = this.newTransform
+    this.dragContainer.style.transform = `matrix(${newScale}, 0, 0, ${newScale}, ${oldX + (oldX - newX) / 2}, ${oldY + (oldY - newY) / 2})`
     this.intermediaryFrameAnimation = 0
   }
 
