@@ -101,6 +101,33 @@ render() {
 }
 ```
 
+### Boundaries
+`PanZoom` supports the `enableBoundingBox` prop to restrict panning. The box is calculated based on the width and height of the inner content.
+A ratio is applied so that the bounding box allows panning up to a specific percentage of the inner content.
+By default this ratio is `0.8` but can be modified with `boundaryRatioVertical` and `boundaryRatioHorizontal`. In this case the pan content will be able to pan outside the parent container up to 80% of its size (the 20% remaining will always be visible).
+
+A negative ratio will create a padding, but combined with zooming it can produce strange behaviour.
+A ratio above 1 will allow the pan content to pan outside the parent container more than its size.
+
+To use the bounding box:
+```js
+import { PanZoom } from 'react-easy-panzoom'
+
+// ...
+render() {
+  return (
+    <PanZoom
+      boundaryRatioVertical={0.8} 
+      boundaryRatioHorizontal={0.8} 
+      enableBoundingBox
+    >
+      <div>{ 'This content can be panned and zoomed' }</div>
+    </PanZoom>
+  )
+}
+```
+
+
 ## Properties
 |Name|Type|Default|Description|
 |---|---|---|---|
@@ -114,6 +141,9 @@ render() {
 |keyMapping|`object`|false|Define specific key mapping for keyboard interaction (e.g. `{ '<keyCode>': { x: 0, y: 1, z: 0 } }`, with `<keyCode>` being the key code to map)|
 |minZoom|`number`| |Sets the minimum zoom value|
 |maxZoom|`number`| |Sets the maximum zoom value|
+|enableBoundingBox|`boolean`|false|Enable bounding box for the panzoom element. The bounding box will contain the element based on a ratio of its size|
+|boundaryRatioVertical|`number`|0.8|Vertical ratio for the bounding box|
+|boundaryRatioHorizontal|`number`|0.8|Horizontal ratio for the bounding box|
 |noStateUpdate|`bool`|true|Disable state update for each new x, y, z transform value while panning. Enabling it drastically increases the performances |
 |onPanStart|`func`| |Fired on pan start|
 |onPan|`func`| |Fired on pan|
