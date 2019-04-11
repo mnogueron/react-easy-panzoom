@@ -600,7 +600,6 @@ class PanZoom extends React.Component<Props> {
             display: 'inline-block',
             transformOrigin: '0 0 0',
             transform: `matrix(${scale}, 0, 0, ${scale}, ${x}, ${y})`,
-            transition: 'all 0.05s linear',
             willChange: 'transform',
           }}
         >
