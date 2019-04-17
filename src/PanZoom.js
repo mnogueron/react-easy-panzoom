@@ -533,69 +533,29 @@ class PanZoom extends React.Component<Props> {
     return { x: offsetX, y: offsetY }
   }
 
-  applyTransformMatrix = (a, b, c, d, transformX, transformY) => (x, y) => {
-    return [
-      x * a + y * c + transformX,
-      x * b + y * d + transformY,
-    ]
-  }
-
   getTransformMatrix = (x, y, scale, rotate) => {
     if (!this.dragContainer) {
       return { a: 1, b: 0, c: 0, d: 1, x, y }
     }
 
-    const { clientLeft, clientTop, clientWidth, clientHeight } = this.dragContainer
-
+    const { clientWidth, clientHeight } = this.dragContainer
     const centerX = clientWidth / 2
     const centerY = clientHeight / 2
 
     const rad = rotate * Math.PI / 180
-    const cosRad = Math.cos(rad)
-    const sinRad = Math.sin(rad)
-    const a = cosRad
-    const b = sinRad
+    const a = Math.cos(rad) * scale
+    const b = Math.sin(rad) * scale
     const c = -b
     const d = a
 
-    //const transformX = x
-    //const transformY = y
-    //const transformX = x * cosRad - y * sinRad - centerX * cosRad + centerY * sinRad + centerX
-    //const transformY = x * sinRad + y * cosRad - centerX * sinRad - centerY * cosRad + centerY
-
-    // TODO we need to counter-balance the x y position as the rotation might
-    //  increase or decrease the width / height of the div
-    const transformX = - centerX * cosRad * scale + centerY * sinRad * scale + centerX * scale
-    const transformY = - centerX * sinRad * scale - centerY * cosRad * scale + centerY * scale
-
-    //console.log(a * scale, b * scale, c * scale, d * scale, transformX, transformY)
-
-    /*const matrixTransformation = this.applyTransformMatrix(a, b, c, d, transformX, transformY)
-    const [x1, y1] = [clientLeft, clientTop]
-    const [x2, y2] = [clientLeft + clientWidth, clientTop]
-    const [x3, y3] = [clientLeft + clientWidth, clientTop + clientHeight]
-    const [x4, y4] = [clientLeft, clientTop + clientHeight]
-
-    const [newX1, newY1] = matrixTransformation(x1, y1)
-    const [newX2, newY2] = matrixTransformation(x2, y2)
-    const [newX3, newY3] = matrixTransformation(x3, y3)
-    const [newX4, newY4] = matrixTransformation(x4, y4)
-
-    const newWidth  = Math.abs(Math.max(newX1, newX2, newX3, newX4) - Math.min(newX1, newX2, newX3, newX4))
-    const newHeight = Math.abs(Math.max(newY1, newY2, newY3, newY4) - Math.min(newY1, newY2, newY3, newY4))
-
-    console.log(x1, y1, newX1, newY1)
-    console.log(x2, y2, newX2, newY2)
-    console.log(x3, y3, newX3, newY3)
-    console.log(x4, y4, newX4, newY4)
-    console.log(newWidth, newHeight)*/
-
+    const transformX = - centerX * a + centerY * b + centerX * scale
+    const transformY =   centerX * c - centerY * d + centerY * scale
 
     return {
-      a: a * scale,
-      b: b * scale,
-      c: c * scale,
-      d: d * scale,
+      a,
+      b,
+      c,
+      d,
       x: transformX + x,
       y: transformY + y,
     }
