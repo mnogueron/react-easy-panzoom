@@ -47,6 +47,7 @@ class PanZoom extends React.Component<Props> {
     x: 0,
     y: 0,
     scale: 1,
+    rotate: 0,
   }
 
   componentDidMount(): void {
@@ -443,14 +444,14 @@ class PanZoom extends React.Component<Props> {
   }
 
   moveBy = (dx, dy, noStateUpdate) => {
-    const { scale, x, y } = this.state
+    const { x, y, scale, rotate } = this.state
 
     // Allow better performance by not updating the state on every change
     if (noStateUpdate) {
       const { boundX, boundY } = this.getBoundCoordinates(this.prevPanPosition.x + dx, this.prevPanPosition.y + dy, scale)
 
-      this.oldTransform = { x, y, scale }
-      this.newTransform = { x: boundX, y: boundY, scale }
+      this.oldTransform = { x, y, scale, rotate }
+      this.newTransform = { x: boundX, y: boundY, scale, rotate }
 
       this.intermediaryFrameAnimation = window.requestAnimationFrame(this.applyIntermediaryTransform)
 
@@ -465,6 +466,15 @@ class PanZoom extends React.Component<Props> {
 
     const { boundX, boundY } = this.getBoundCoordinates(x + dx, y + dy, scale)
     this.setState(({ x: boundX, y: boundY}))
+  }
+
+  rotate = (value: number | (prevAngle: number) => number) => {
+    const { rotate } = this.state
+    let newAngle = value
+    if (typeof value === 'function') {
+      newAngle = value(rotate)
+    }
+    this.setState({ rotate: newAngle % 360 })
   }
 
   zoomAbs = (x, y, zoomLevel) => {
@@ -523,19 +533,95 @@ class PanZoom extends React.Component<Props> {
     return { x: offsetX, y: offsetY }
   }
 
+  applyTransformMatrix = (a, b, c, d, transformX, transformY) => (x, y) => {
+    return [
+      x * a + y * c + transformX,
+      x * b + y * d + transformY,
+    ]
+  }
+
+  getTransformMatrix = (x, y, scale, rotate) => {
+    if (!this.dragContainer) {
+      return { a: 1, b: 0, c: 0, d: 1, x, y }
+    }
+
+    const { clientLeft, clientTop, clientWidth, clientHeight } = this.dragContainer
+
+    const centerX = clientWidth / 2
+    const centerY = clientHeight / 2
+
+    const rad = rotate * Math.PI / 180
+    const cosRad = Math.cos(rad)
+    const sinRad = Math.sin(rad)
+    const a = cosRad
+    const b = sinRad
+    const c = -b
+    const d = a
+
+    //const transformX = x
+    //const transformY = y
+    //const transformX = x * cosRad - y * sinRad - centerX * cosRad + centerY * sinRad + centerX
+    //const transformY = x * sinRad + y * cosRad - centerX * sinRad - centerY * cosRad + centerY
+
+    // TODO we need to counter-balance the x y position as the rotation might
+    //  increase or decrease the width / height of the div
+    const transformX = - centerX * cosRad * scale + centerY * sinRad * scale + centerX * scale
+    const transformY = - centerX * sinRad * scale - centerY * cosRad * scale + centerY * scale
+
+    //console.log(a * scale, b * scale, c * scale, d * scale, transformX, transformY)
+
+    /*const matrixTransformation = this.applyTransformMatrix(a, b, c, d, transformX, transformY)
+    const [x1, y1] = [clientLeft, clientTop]
+    const [x2, y2] = [clientLeft + clientWidth, clientTop]
+    const [x3, y3] = [clientLeft + clientWidth, clientTop + clientHeight]
+    const [x4, y4] = [clientLeft, clientTop + clientHeight]
+
+    const [newX1, newY1] = matrixTransformation(x1, y1)
+    const [newX2, newY2] = matrixTransformation(x2, y2)
+    const [newX3, newY3] = matrixTransformation(x3, y3)
+    const [newX4, newY4] = matrixTransformation(x4, y4)
+
+    const newWidth  = Math.abs(Math.max(newX1, newX2, newX3, newX4) - Math.min(newX1, newX2, newX3, newX4))
+    const newHeight = Math.abs(Math.max(newY1, newY2, newY3, newY4) - Math.min(newY1, newY2, newY3, newY4))
+
+    console.log(x1, y1, newX1, newY1)
+    console.log(x2, y2, newX2, newY2)
+    console.log(x3, y3, newX3, newY3)
+    console.log(x4, y4, newX4, newY4)
+    console.log(newWidth, newHeight)*/
+
+
+    return {
+      a: a * scale,
+      b: b * scale,
+      c: c * scale,
+      d: d * scale,
+      x: transformX + x,
+      y: transformY + y,
+    }
+  }
+
+  getTransformMatrixString = (x, y, scale, rotate) => {
+    const { a, b, c, d, x: transformX, y: transformY} = this.getTransformMatrix(x, y, scale, rotate)
+    return `matrix(${a}, ${b}, ${c}, ${d}, ${transformX}, ${transformY})`
+  }
+
   applyTransform = () => {
-    const { x, y, scale } = this.newTransform
-    this.dragContainer.style.transform = `matrix(${scale}, 0, 0, ${scale}, ${x}, ${y})`
+    const { x, y, scale, rotate } = this.newTransform
+    this.dragContainer.style.transform = this.getTransformMatrixString(x, y, scale, rotate)
     this.frameAnimation = 0
   }
 
   applyIntermediaryTransform = () => {
-    const { x: oldX, y: oldY, scale: oldScale } = this.oldTransform
-    const { x: newX, y: newY, scale: newScale } = this.newTransform
-    this.dragContainer.style.transform = `matrix(${newScale}, 0, 0, ${newScale}, ${oldX + (oldX - newX) / 2}, ${oldY + (oldY - newY) / 2})`
+    const { x: oldX, y: oldY, scale: oldScale, rotate: oldRotate } = this.oldTransform
+    const { x: newX, y: newY, scale: newScale, rotate: newRotate } = this.newTransform
+    const intermediateX = oldX + (oldX - newX) / 2
+    const intermediateY = oldY + (oldY - newY) / 2
+    this.dragContainer.style.transform = this.getTransformMatrixString(intermediateX, intermediateY, newScale, newRotate)
     this.intermediaryFrameAnimation = 0
   }
 
+  // TODO correct when rotating
   getBoundCoordinates = (x, y, newScale) => {
     const { enableBoundingBox, boundaryRatioVertical, boundaryRatioHorizontal } = this.props
     const { scale } = this.state
@@ -578,7 +664,7 @@ class PanZoom extends React.Component<Props> {
 
   render() {
     const { children, style, disabled, disableKeyInteraction } = this.props
-    const { x, y, scale } = this.state
+    const { x, y, scale, rotate } = this.state
     return (
       <div
         ref={ref => this.container = ref}
@@ -599,7 +685,7 @@ class PanZoom extends React.Component<Props> {
           style={{
             display: 'inline-block',
             transformOrigin: '0 0 0',
-            transform: `matrix(${scale}, 0, 0, ${scale}, ${x}, ${y})`,
+            transform: this.getTransformMatrixString(x, y, scale, rotate),
             transition: 'all 0.10s linear',
             willChange: 'transform',
           }}

@@ -5,6 +5,7 @@ import { withKnobs, boolean, number } from '@storybook/addon-knobs';
 import ZoomControllerUI from './ControllerUI/ZoomControllerUI'
 import PadControllerUI from './ControllerUI/PadControllerUI'
 import ResetControllerUI from './ControllerUI/ResetControllerUI'
+import RotationControllerUI from './ControllerUI/RotationControllerUI'
 import PanZoom from '../src/PanZoom'
 import ContentBox from './ContentBox'
 
@@ -77,6 +78,14 @@ const PanZoomControlUI = (props) => {
     panZoom.current && panZoom.current.reset()
   }
 
+  function rotateClockwise() {
+    panZoom.current && panZoom.current.rotate(prevAngle => prevAngle + 10)
+  }
+
+  function rotateCounterClockwise() {
+    panZoom.current && panZoom.current.rotate(prevAngle => prevAngle - 10)
+  }
+
   return (
     <div style={{ position: 'relative' }}>
       <PanZoom
@@ -94,6 +103,13 @@ const PanZoomControlUI = (props) => {
         <ZoomControllerUI
           onZoomIn={onZoomIn}
           onZoomOut={onZoomOut}
+        />
+      </div>
+
+      <div style={{ position: 'absolute', right: 8, top: 8, zIndex: 1 }}>
+        <RotationControllerUI
+          rotateClockwise={rotateClockwise}
+          rotateCounterClockwise={rotateCounterClockwise}
         />
       </div>
 
