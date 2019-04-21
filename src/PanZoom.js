@@ -460,12 +460,12 @@ class PanZoom extends React.Component<Props> {
       const intermediateY = transformY + (transformY - boundY) / 2
 
       this.intermediateTransformMatrixString = this.getTransformMatrixString(a, b, c, d, intermediateX, intermediateY)
-
       this.intermediateFrameAnimation = window.requestAnimationFrame(this.applyIntermediateTransform)
 
+      // get bound x / y coords without the rotation offset
       this.prevPanPosition = {
-        x: boundX,
-        y: boundY,
+        x: this.prevPanPosition.x + dx - (transformX - boundX),
+        y: this.prevPanPosition.y + dy - (transformY - boundY),
       }
 
       this.transformMatrixString = this.getTransformMatrixString(a, b, c, d, boundX, boundY)
@@ -474,7 +474,11 @@ class PanZoom extends React.Component<Props> {
     else {
       const { x: transformX, y: transformY} = this.getTransformMatrix(x + dx, y + dy, scale, rotate)
       const { boundX, boundY } = this.getBoundCoordinates(transformX, transformY, scale)
-      this.setState(({ x: boundX, y: boundY}))
+
+      this.setState(({
+        x: x + dx - (transformX - boundX),
+        y: y + dy - (transformY - boundY),
+      }))
     }
   }
 
@@ -584,8 +588,7 @@ class PanZoom extends React.Component<Props> {
     this.dragContainer.style.transform = this.intermediateTransformMatrixString
     this.intermediateFrameAnimation = 0
   }
-
-  // TODO correct when rotating
+  
   getBoundCoordinates = (x, y, newScale) => {
     const { enableBoundingBox, boundaryRatioVertical, boundaryRatioHorizontal } = this.props
     const { scale } = this.state
@@ -651,7 +654,7 @@ class PanZoom extends React.Component<Props> {
         //onWheel={this.onWheel}
         onKeyDown={this.onKeyDown}
         onTouchStart={this.onTouchStart}
-        style={{ cursor: disabled ? 'initial' : 'pointer', touchAction: 'none', ...style }}
+        style={{ cursor: disabled ? 'initial' : 'pointer', ...style }}
       >
         <div
           ref={ref => this.dragContainer = ref}
