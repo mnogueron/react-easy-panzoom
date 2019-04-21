@@ -22,7 +22,7 @@ const DefaultPanZoom = (props) => (
     maxZoom={3}
     autoCenterZoomLevel={1}
     autoCenter
-    noStateUpdate={false}
+    noStateUpdate={true}
     {...props}
   />
 )

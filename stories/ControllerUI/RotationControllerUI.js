@@ -23,7 +23,7 @@ const RotationControllerUI = ({ classes, rotateClockwise, rotateCounterClockwise
         <i className="material-icons">refresh</i>
       </Button>
       <Button onClick={rotateCounterClockwise}>
-        <i className="material-icons" style={{ transform: 'rotate(180deg)' }}>refresh</i>
+        <i className="material-icons" style={{ transform: 'scale(1, -1)' }}>refresh</i>
       </Button>
     </div>
   )
