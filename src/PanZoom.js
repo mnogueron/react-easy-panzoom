@@ -20,6 +20,26 @@ type Props = {
   onPanEnd?: (any) => void,
 }
 
+// Transform matrix use to rotate, zoom and pan
+// Can be written as T(centerX, centerY) * R(theta) * T(-centerX, -centerY) * S(scale, scale) + T(offsetX, offsetY)
+// ( a , c, x )
+// ( b , d, y )
+// ( 0 , 0, 1 )
+const TransformMatrix = (angle, centerX, centerY, scale, offsetX, offsetY) => {
+  const theta = angle * Math.PI / 180
+  const a = Math.cos(theta) * scale
+  const b = Math.sin(theta) * scale
+  const c = -b
+  const d = a
+  const transformX = - centerX * a + centerY * b + centerX * scale
+  const transformY =   centerX * c - centerY * d + centerY * scale
+  return { a, b, c, d, x : transformX + offsetX, y: transformY + offsetY }
+}
+
+const preventDefault = (e) => {
+  e.preventDefault()
+}
+
 class PanZoom extends React.Component<Props> {
 
   container = null
@@ -366,16 +386,12 @@ class PanZoom extends React.Component<Props> {
     }
   }
 
-  preventDefault = (e) => {
-    e.preventDefault()
-  }
-
   captureTextSelection = () => {
-    window.addEventListener('selectstart', this.preventDefault)
+    window.addEventListener('selectstart', preventDefault)
   }
 
   releaseTextSelection = () => {
-    window.removeEventListener('selectstart', this.preventDefault)
+    window.removeEventListener('selectstart', preventDefault)
   }
 
   triggerOnPanStart = (e) => {
@@ -453,14 +469,15 @@ class PanZoom extends React.Component<Props> {
 
     // Allow better performance by not updating the state on every change
     if (noStateUpdate) {
+      const { x: prevTransformX, y: prevTransformY } = this.getTransformMatrix(this.prevPanPosition.x, this.prevPanPosition.y, scale, rotate)
       const { a, b, c, d, x: transformX, y: transformY} = this.getTransformMatrix(this.prevPanPosition.x + dx, this.prevPanPosition.y + dy, scale, rotate)
       const { boundX, boundY } = this.getBoundCoordinates(transformX, transformY, scale)
 
-      const intermediateX = transformX + (transformX - boundX) / 2
-      const intermediateY = transformY + (transformY - boundY) / 2
+      const intermediateX = prevTransformX + (prevTransformX - boundX) / 2
+      const intermediateY = prevTransformY + (prevTransformY - boundY) / 2
 
       this.intermediateTransformMatrixString = this.getTransformMatrixString(a, b, c, d, intermediateX, intermediateY)
-      this.intermediateFrameAnimation = window.requestAnimationFrame(this.applyIntermediateTransform)
+      this.transformMatrixString = this.getTransformMatrixString(a, b, c, d, boundX, boundY)
 
       // get bound x / y coords without the rotation offset
       this.prevPanPosition = {
@@ -468,7 +485,11 @@ class PanZoom extends React.Component<Props> {
         y: this.prevPanPosition.y + dy - (transformY - boundY),
       }
 
-      this.transformMatrixString = this.getTransformMatrixString(a, b, c, d, boundX, boundY)
+      // only apply intermediate animation if it is different from the end result
+      if (this.intermediateTransformMatrixString !== this.transformMatrixString) {
+        this.intermediateFrameAnimation = window.requestAnimationFrame(this.applyIntermediateTransform)
+      }
+
       this.frameAnimation = window.requestAnimationFrame(this.applyTransform)
     }
     else {
@@ -529,7 +550,7 @@ class PanZoom extends React.Component<Props> {
   }
 
   reset = () => {
-    this.setState({ x: 0, y: 0, scale: 1 })
+    this.setState({ x: 0, y: 0, scale: 1, rotate: 0 })
   }
 
   zoomIn = () => {
@@ -556,34 +577,20 @@ class PanZoom extends React.Component<Props> {
     const centerX = clientWidth / 2
     const centerY = clientHeight / 2
 
-    const rad = rotate * Math.PI / 180
-    const a = Math.cos(rad) * scale
-    const b = Math.sin(rad) * scale
-    const c = -b
-    const d = a
-
-    const transformX = - centerX * a + centerY * b + centerX * scale
-    const transformY =   centerX * c - centerY * d + centerY * scale
-
-    return {
-      a,
-      b,
-      c,
-      d,
-      x: transformX + x,
-      y: transformY + y,
-    }
+    return TransformMatrix(rotate, centerX, centerY, scale, x, y)
   }
 
   getTransformMatrixString = (a, b, c, d, x, y) => {
     return `matrix(${a}, ${b}, ${c}, ${d}, ${x}, ${y})`
   }
 
+  // Apply transform through rAF
   applyTransform = () => {
     this.dragContainer.style.transform = this.transformMatrixString
     this.frameAnimation = 0
   }
 
+  // Apply intermediate transform through rAF
   applyIntermediateTransform = () => {
     this.dragContainer.style.transform = this.intermediateTransformMatrixString
     this.intermediateFrameAnimation = 0
@@ -615,7 +622,7 @@ class PanZoom extends React.Component<Props> {
     //  we should apply the transform matrix to all the coordinates and check if they are within the boundaries
     let boundX = x
     let boundY = y
-    
+
     if (boundY < -boundaryRatioVertical * height) {
       boundY = -boundaryRatioVertical * height
     }
