@@ -177,6 +177,9 @@ storiesOf('react-easy-panzoom', module)
   .add('Control UI', () => (
     <PanZoomControlUI
       disableKeyInteraction={boolean('Disabled key interaction', false)}
+      boundaryRatioHorizontal={number('Horizontal boundary ratio', 0.8, { range: true, min: -1, max: 2, step: 0.1 })}
+      boundaryRatioVertical={number('Vertical boundary ratio', 0.8, { range: true, min: -1, max: 2, step: 0.1 })}
+      enableBoundingBox
       realPinch={boolean('Enable real pinch', false)}
     />
   ))
