@@ -40,8 +40,8 @@ class PanZoom extends React.Component<Props> {
   frameAnimation = null
   intermediaryFrameAnimation = null
 
-  oldTransform = null
-  newTransform = null
+  transformMatrixString = null
+  intermediateTransformMatrixString = null
 
   state = {
     x: 0,
@@ -450,8 +450,10 @@ class PanZoom extends React.Component<Props> {
     if (noStateUpdate) {
       const { boundX, boundY } = this.getBoundCoordinates(this.prevPanPosition.x + dx, this.prevPanPosition.y + dy, scale)
 
-      this.oldTransform = { x, y, scale, rotate }
-      this.newTransform = { x: boundX, y: boundY, scale, rotate }
+      const intermediateX = x + (x - boundX) / 2
+      const intermediateY = y + (y - boundY) / 2
+
+      this.intermediateTransformMatrixString = this.getTransformMatrixString(intermediateX, intermediateY, scale, rotate)
 
       this.intermediaryFrameAnimation = window.requestAnimationFrame(this.applyIntermediaryTransform)
 
@@ -460,6 +462,7 @@ class PanZoom extends React.Component<Props> {
         y: boundY,
       }
 
+      this.transformMatrixString = this.getTransformMatrixString(boundX, boundY, scale, rotate)
       this.frameAnimation = window.requestAnimationFrame(this.applyTransform)
       return
     }
@@ -567,17 +570,12 @@ class PanZoom extends React.Component<Props> {
   }
 
   applyTransform = () => {
-    const { x, y, scale, rotate } = this.newTransform
-    this.dragContainer.style.transform = this.getTransformMatrixString(x, y, scale, rotate)
+    this.dragContainer.style.transform = this.transformMatrixString
     this.frameAnimation = 0
   }
 
   applyIntermediaryTransform = () => {
-    const { x: oldX, y: oldY, scale: oldScale, rotate: oldRotate } = this.oldTransform
-    const { x: newX, y: newY, scale: newScale, rotate: newRotate } = this.newTransform
-    const intermediateX = oldX + (oldX - newX) / 2
-    const intermediateY = oldY + (oldY - newY) / 2
-    this.dragContainer.style.transform = this.getTransformMatrixString(intermediateX, intermediateY, newScale, newRotate)
+    this.dragContainer.style.transform = this.intermediateTransformMatrixString
     this.intermediaryFrameAnimation = 0
   }
 
