@@ -538,7 +538,7 @@ class PanZoom extends React.Component<Props> {
 
   getTransformMatrix = (x, y, scale, rotate) => {
     if (!this.dragContainer) {
-      return { a: 1, b: 0, c: 0, d: 1, x, y }
+      return { a: scale, b: 0, c: 0, d: scale, x, y }
     }
 
     const { clientWidth, clientHeight } = this.dragContainer
