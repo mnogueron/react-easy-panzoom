@@ -38,7 +38,7 @@ class PanZoom extends React.Component<Props> {
   }
 
   frameAnimation = null
-  intermediaryFrameAnimation = null
+  intermediateFrameAnimation = null
 
   transformMatrixString = null
   intermediateTransformMatrixString = null
@@ -333,9 +333,9 @@ class PanZoom extends React.Component<Props> {
       this.frameAnimation = 0
     }
 
-    if (this.intermediaryFrameAnimation) {
-      window.cancelAnimationFrame(this.intermediaryFrameAnimation)
-      this.intermediaryFrameAnimation = 0
+    if (this.intermediateFrameAnimation) {
+      window.cancelAnimationFrame(this.intermediateFrameAnimation)
+      this.intermediateFrameAnimation = 0
     }
   }
 
@@ -355,9 +355,9 @@ class PanZoom extends React.Component<Props> {
       this.frameAnimation = 0
     }
 
-    if (this.intermediaryFrameAnimation) {
-      window.cancelAnimationFrame(this.intermediaryFrameAnimation)
-      this.intermediaryFrameAnimation = 0
+    if (this.intermediateFrameAnimation) {
+      window.cancelAnimationFrame(this.intermediateFrameAnimation)
+      this.intermediateFrameAnimation = 0
     }
   }
 
@@ -455,7 +455,7 @@ class PanZoom extends React.Component<Props> {
 
       this.intermediateTransformMatrixString = this.getTransformMatrixString(intermediateX, intermediateY, scale, rotate)
 
-      this.intermediaryFrameAnimation = window.requestAnimationFrame(this.applyIntermediaryTransform)
+      this.intermediateFrameAnimation = window.requestAnimationFrame(this.applyIntermediateTransform)
 
       this.prevPanPosition = {
         x: boundX,
@@ -574,9 +574,9 @@ class PanZoom extends React.Component<Props> {
     this.frameAnimation = 0
   }
 
-  applyIntermediaryTransform = () => {
+  applyIntermediateTransform = () => {
     this.dragContainer.style.transform = this.intermediateTransformMatrixString
-    this.intermediaryFrameAnimation = 0
+    this.intermediateFrameAnimation = 0
   }
 
   // TODO correct when rotating
