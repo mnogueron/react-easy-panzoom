@@ -52,6 +52,9 @@ class PanZoom extends React.Component<Props> {
 
   componentDidMount(): void {
     const { autoCenter, autoCenterZoomLevel, minZoom, maxZoom } = this.props
+
+    this.container.addEventListener('mousewheel', this.onWheel, { passive: false })
+
     if (maxZoom < minZoom) {
       throw new Error('[PanZoom]: maxZoom props cannot be inferior to minZoom')
     }
@@ -71,6 +74,8 @@ class PanZoom extends React.Component<Props> {
     this.cleanMouseListeners()
     this.cleanTouchListeners()
     this.releaseTextSelection()
+
+    this.container.removeEventListener('mousewheel', this.onWheel, { passive: false })
   }
 
   onDoubleClick = (e) => {
@@ -163,7 +168,7 @@ class PanZoom extends React.Component<Props> {
     const scale = this.getScaleMultiplier(e.deltaY)
     const offset = this.getOffset(e)
     this.zoomTo(offset.x, offset.y, scale)
-    //e.preventDefault()
+    e.preventDefault()
   }
 
   onKeyDown = (e) => {
@@ -626,9 +631,6 @@ class PanZoom extends React.Component<Props> {
     const { x, y, scale, rotate } = this.state
     const { a, b, c, d, x: transformX, y: transformY} = this.getTransformMatrix(x, y, scale, rotate)
     const transform = this.getTransformMatrixString(a, b, c, d, transformX, transformY)
-    console.log(transform)
-
-    //console.log(a, b, c, d, transformX, transformY)
 
     return (
       <div
@@ -640,7 +642,13 @@ class PanZoom extends React.Component<Props> {
         }
         onDoubleClick={this.onDoubleClick}
         onMouseDown={this.onMouseDown}
-        onWheel={this.onWheel}
+        // React onWheel event listener is broken on Chrome 73
+        // The default options for the wheel event listener has been defaulted to passive
+        // but this behaviour breaks the zoom feature of PanZoom.
+        // Until further research onWheel listener is replaced by
+        // this.container.addEventListener('mousewheel', this.onWheel, { passive: false })
+        // see Chrome motivations https://developers.google.com/web/updates/2019/02/scrolling-intervention
+        //onWheel={this.onWheel}
         onKeyDown={this.onKeyDown}
         onTouchStart={this.onTouchStart}
         style={{ cursor: disabled ? 'initial' : 'pointer', touchAction: 'none', ...style }}
