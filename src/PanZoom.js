@@ -588,7 +588,8 @@ class PanZoom extends React.Component<Props> {
     this.dragContainer.style.transform = this.intermediateTransformMatrixString
     this.intermediateFrameAnimation = 0
   }
-  
+
+  // TODO fix bounding when using rotation
   getBoundCoordinates = (x, y, newScale) => {
     const { enableBoundingBox, boundaryRatioVertical, boundaryRatioHorizontal } = this.props
     const { scale } = this.state
@@ -610,8 +611,11 @@ class PanZoom extends React.Component<Props> {
       height *= (scale / newScale)
     }
 
+    // TODO this is invalid when using the transform matrix.
+    //  we should apply the transform matrix to all the coordinates and check if they are within the boundaries
     let boundX = x
     let boundY = y
+    
     if (boundY < -boundaryRatioVertical * height) {
       boundY = -boundaryRatioVertical * height
     }
