@@ -466,12 +466,11 @@ class PanZoom extends React.Component<Props> {
 
   autoCenter = (zoomLevel = 1) => {
     const { minZoom, maxZoom } = this.props
-    const { scale: prevScale } = this.state
     const containerRect = this.container.getBoundingClientRect()
-    const clientRect = this.dragContainer.getBoundingClientRect()
-    const widthRatio = containerRect.width / clientRect.width
-    const heightRatio = containerRect.height / clientRect.height
-    let scale = Math.min(widthRatio, heightRatio) * zoomLevel * prevScale
+    const { clientWidth, clientHeight } = this.dragContainer
+    const widthRatio = containerRect.width / clientWidth
+    const heightRatio = containerRect.height / clientHeight
+    let scale = Math.min(widthRatio, heightRatio) * zoomLevel
 
     if (scale < minZoom) {
       console.warn(`[PanZoom]: initial zoomLevel produces a scale inferior to minZoom, reverted to default: ${minZoom}. Consider using a zoom level > ${minZoom}`)
@@ -482,9 +481,9 @@ class PanZoom extends React.Component<Props> {
       scale = maxZoom
     }
 
-    const x = (containerRect.width - (clientRect.width/prevScale * scale)) / 2
-    const y = (containerRect.height - (clientRect.height/prevScale * scale)) / 2
-    this.setState({ x, y, scale })
+    const x = (containerRect.width - (clientWidth * scale)) / 2
+    const y = (containerRect.height - (clientHeight * scale)) / 2
+    this.setState({ x, y, scale, rotate: 0 })
   }
 
   moveByRatio = (x, y, moveSpeedRatio = 0.05) => {
@@ -503,7 +502,7 @@ class PanZoom extends React.Component<Props> {
     if (noStateUpdate) {
       const { x: prevTransformX, y: prevTransformY } = this.getTransformMatrix(this.prevPanPosition.x, this.prevPanPosition.y, scale, rotate)
       const { a, b, c, d, x: transformX, y: transformY} = this.getTransformMatrix(this.prevPanPosition.x + dx, this.prevPanPosition.y + dy, scale, rotate)
-      const { boundX, boundY } = this.getBoundCoordinates(transformX, transformY, scale, rotate, this.prevPanPosition.x + dx, this.prevPanPosition.y + dy)
+      const { boundX, boundY, offsetX, offsetY } = this.getBoundCoordinates(transformX, transformY, scale, rotate, this.prevPanPosition.x + dx, this.prevPanPosition.y + dy)
 
       const intermediateX = prevTransformX + (prevTransformX - boundX) / 2
       const intermediateY = prevTransformY + (prevTransformY - boundY) / 2
@@ -513,8 +512,8 @@ class PanZoom extends React.Component<Props> {
 
       // get bound x / y coords without the rotation offset
       this.prevPanPosition = {
-        x: this.prevPanPosition.x + dx - (transformX - boundX),
-        y: this.prevPanPosition.y + dy - (transformY - boundY),
+        x: offsetX,
+        y: offsetY,
       }
 
       // only apply intermediate animation if it is different from the end result
@@ -550,7 +549,7 @@ class PanZoom extends React.Component<Props> {
 
   zoomTo = (x, y, ratio) => {
     const { minZoom, maxZoom } = this.props
-    const { x: transformX, y: transformY, scale } = this.state
+    const { x: transformX, y: transformY, scale, rotate } = this.state
 
     let newScale = scale * ratio
     if (newScale < minZoom) {
@@ -571,7 +570,7 @@ class PanZoom extends React.Component<Props> {
     const newX = x - ratio * (x - transformX)
     const newY = y - ratio * (y - transformY)
 
-    const { boundX, boundY } = this.getBoundCoordinates(newX, newY, scale)
+    const { boundX, boundY } = this.getBoundCoordinates(newX, newY, scale, rotate, newX, newY)
     this.setState({ x: boundX, y: boundY, scale: newScale })
   }
 
@@ -628,7 +627,6 @@ class PanZoom extends React.Component<Props> {
     this.intermediateFrameAnimation = 0
   }
 
-  // TODO fix bounding when using rotation
   getBoundCoordinates = (x, y, newScale, rotate = 0, offsetX = 0, offsetY = 0) => {
     const { enableBoundingBox, boundaryRatioVertical, boundaryRatioHorizontal } = this.props
 
@@ -639,31 +637,35 @@ class PanZoom extends React.Component<Props> {
       }
     }
 
-    const containerRect = this.container.getBoundingClientRect()
-
-    // TODO this is invalid when using the transform matrix.
-    //  we should apply the transform matrix to all the coordinates and check if they are within the boundaries
-    let boundX = x
-    let boundY = y
-
+    const { height: containerHeight, width: containerWidth } = this.container.getBoundingClientRect()
     const { top, left, width, height } = getTransformedElementCoordinates(rotate, newScale, offsetX, offsetY)(this.dragContainer)
-    //console.log(top, left, width, height)
+
+    // check that computed are inside boundaries otherwise set to the bounding box limits
+    let boundX = left
+    let boundY = top
 
     if (boundY < -boundaryRatioVertical * height) {
       boundY = -boundaryRatioVertical * height
     }
-    else if (boundY > containerRect.height - (1 - boundaryRatioVertical) * height) {
-      boundY = containerRect.height - (1 - boundaryRatioVertical) * height
+    else if (boundY > containerHeight - (1 - boundaryRatioVertical) * height) {
+      boundY = containerHeight - (1 - boundaryRatioVertical) * height
     }
 
     if (boundX < -boundaryRatioHorizontal * width) {
       boundX = -boundaryRatioHorizontal * width
     }
-    else if (boundX > containerRect.width - (1 - boundaryRatioHorizontal) * width) {
-      boundX = containerRect.width - (1 - boundaryRatioHorizontal) * width
+    else if (boundX > containerWidth - (1 - boundaryRatioHorizontal) * width) {
+      boundX = containerWidth - (1 - boundaryRatioHorizontal) * width
     }
 
-    return { boundX, boundY }
+    // return new bounds coordinates for the transform matrix
+    // not the computed x/y coordinates
+    return {
+      boundX: x - (left - boundX),
+      boundY: y - (top - boundY),
+      offsetX: offsetX - (left - boundX),
+      offsetY: offsetY - (top - boundY),
+    }
   }
 
   render() {
