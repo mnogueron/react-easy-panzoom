@@ -634,6 +634,8 @@ class PanZoom extends React.Component<Props> {
       return {
         boundX: x,
         boundY: y,
+        offsetX: x,
+        offsetY: y,
       }
     }
 
