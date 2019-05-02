@@ -163,6 +163,7 @@ Available methods are listed below:
 |autoCenter| |Center and resize the view to fit the `PanZoom` container|
 |reset| |Reset the view to it's original state (will not auto center if `autoCenter` is enabled)|
 |moveByRatio|`(x: number, y: number, moveSpeedRatio?: number)`|Move the view along `x` or/and `y` axis|
+|rotate|`(angle: number \| (prevAngle) => newAngle)`|Rotate the view by the specified angle|
 
 ## Thanks
 This react library is based on the awesome [panzoom][panzoom] by @anvaka. 

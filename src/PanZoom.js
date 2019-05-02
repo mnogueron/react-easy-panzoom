@@ -540,7 +540,7 @@ class PanZoom extends React.Component<Props> {
     if (typeof value === 'function') {
       newAngle = value(rotate)
     }
-    this.setState({ rotate: newAngle % 360 })
+    this.setState({ rotate: newAngle })
   }
 
   zoomAbs = (x, y, zoomLevel) => {
