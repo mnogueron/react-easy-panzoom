@@ -150,6 +150,13 @@ render() {
 |onPanEnd|`func`| |Fired on pan end|
 |preventPan|`func`| |Defines a function to prevent pan|
 |style|`object`| |Override the inline-styles of the root element|
+|onMouseDown|`func`| |Fired on mouse down|
+|onMouseUp|`func`| |Fired on mouse up|
+|onMouseMove|`func`| |Fired on mouse move|
+|onTouchStart|`func`| |Fired on touch start|
+|onTouchMove|`func`| |Fired on touch move|
+|onTouchEnd|`func`| |Fired on touch end|
+|onDragContainerRef|`func`| |Called with the dragContainer ref which gets the matrix transform applied|
 
 ## Methods
 By using `ref`, methods from `PanZoom` can be accessed and called to trigger manipulation functions.

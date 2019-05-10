@@ -18,6 +18,13 @@ type Props = {
   onPanStart?: (any) => void,
   onPan?: (any) => void,
   onPanEnd?: (any) => void,
+  onMouseDown?: (any) => void,
+  onMouseUp?: (any) => void,
+  onMouseMove?: (any) => void,
+  onTouchStart?: (any) => void,
+  onTouchMove?: (any) => void,
+  onTouchEnd?: (any) => void,
+  onDragContainerRef?: (any) => void,
 }
 
 // Transform matrix use to rotate, zoom and pan
@@ -137,6 +144,9 @@ class PanZoom extends React.Component<Props> {
   }
 
   onMouseDown = (e) => {
+    if (this.props.onMouseDown) {
+      this.props.onMouseDown(e)
+    }
     const { preventPan } = this.props
     if (this.props.disabled) {
       return
@@ -181,6 +191,9 @@ class PanZoom extends React.Component<Props> {
   }
 
   onMouseMove = (e) => {
+    if (this.props.onMouseMove) {
+      this.props.onMouseMove(e)
+    }
     if (this.panning) {
       const { noStateUpdate } = this.props
 
@@ -203,6 +216,9 @@ class PanZoom extends React.Component<Props> {
   }
 
   onMouseUp = (e) => {
+    if (this.props.onMouseUp) {
+      this.props.onMouseUp(e)
+    }
     // if using noStateUpdate we still need to set the new values in the state
     this.dispatchStateUpdateIfNeeded()
 
@@ -265,6 +281,9 @@ class PanZoom extends React.Component<Props> {
   }
 
   onTouchStart = (e) => {
+    if (this.props.onTouchStart) {
+      this.props.onTouchStart(e)
+    }
     const { preventPan } = this.props
     if (e.touches.length === 1) {
       // Drag
@@ -297,6 +316,9 @@ class PanZoom extends React.Component<Props> {
   }
 
   onToucheMove = (e) => {
+    if (this.props.onTouchMove) {
+      this.props.onTouchMove(e)
+    }
     const { realPinch, noStateUpdate } = this.props
     if (e.touches.length === 1) {
       e.stopPropagation()
@@ -347,6 +369,9 @@ class PanZoom extends React.Component<Props> {
   }
 
   onTouchEnd = (e) => {
+    if (this.props.onTouchEnd) {
+      this.props.onTouchEnd(e)
+    }
     if (e.touches.length > 0) {
       const offset = this.getOffset(e.touches[0])
       this.mousePos = {
@@ -698,7 +723,12 @@ class PanZoom extends React.Component<Props> {
         style={{ cursor: disabled ? 'initial' : 'pointer', ...style }}
       >
         <div
-          ref={ref => this.dragContainer = ref}
+          ref={ref => {
+            this.dragContainer = ref
+            if (this.props.onDragContainerRef) {
+              this.props.onDragContainerRef(ref)
+            } 
+          }}
           style={{
             display: 'inline-block',
             transformOrigin: '0 0 0',
