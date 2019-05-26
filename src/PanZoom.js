@@ -8,6 +8,7 @@ type Props = {
   autoCenter?: boolean,
   autoCenterZoomLevel?: number,
   disableKeyInteraction?: boolean,
+  disableDoubleClickZoom?: Boolean,
   realPinch?: boolean,
   keyMapping?: { [string]: { x: number, y: number, z: number }},
   minZoom?: number,
@@ -131,7 +132,10 @@ class PanZoom extends React.Component<Props> {
   }
 
   onDoubleClick = (e) => {
-    const { doubleZoomSpeed } = this.props
+    const { disableDoubleClickZoom, doubleZoomSpeed } = this.props
+    if (disableDoubleClickZoom) {
+      return
+    }
     const offset = this.getOffset(e)
     this.zoomTo(offset.x, offset.y, doubleZoomSpeed)
   }
@@ -722,6 +726,7 @@ PanZoom.defaultProps = {
   noStateUpdate: true,
   boundaryRatioVertical: 0.8,
   boundaryRatioHorizontal: 0.8,
+  disableDoubleClickZoom: false,
 
   preventPan: () => false,
 }
