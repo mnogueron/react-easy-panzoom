@@ -152,6 +152,7 @@ render() {
 |onPanEnd|`func`| |Fired on pan end|
 |preventPan|`func`| |Defines a function to prevent pan|
 |style|`object`| |Override the inline-styles of the root element|
+|onChange|`func`| |Called after the pan/zoom has changed|
 
 You can also pass in every other props you would pass to a `div` element. Those will be passed through to the container component. This is helpful for adding custom event handlers.
 
