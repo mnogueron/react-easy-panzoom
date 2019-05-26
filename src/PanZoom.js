@@ -133,8 +133,8 @@ class PanZoom extends React.Component<Props> {
     if (
       (prevState.x !== this.state.x
       || prevState.y !== this.state.y
-      || prevState.scale!== this.state.scale
-      || prevState.rotate !== this.state.scale.rotate)
+      || prevState.scale !== this.state.scale
+      || prevState.rotate !== this.state.rotate)
       && this.props.onChange
     ) {
       this.props.onChange({
