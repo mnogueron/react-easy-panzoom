@@ -1,6 +1,14 @@
 // @flow
 import * as React from 'react'
 import warning from 'warning'
+
+type OnChangeData = {
+  x: number,
+  y: number,
+  scale: number,
+  rotate: number
+}
+
 type Props = {
   zoomSpeed?: number,
   doubleZoomSpeed?: number,
@@ -19,6 +27,7 @@ type Props = {
   onPanStart?: (any) => void,
   onPan?: (any) => void,
   onPanEnd?: (any) => void,
+  onChange?: (data: OnChangeData) => void,
 }
 
 // Transform matrix use to rotate, zoom and pan
@@ -116,10 +125,24 @@ class PanZoom extends React.Component<Props> {
     }
   }
 
-  componentDidUpdate(prevProps): void {
+  componentDidUpdate(prevProps, prevState): void {
     if (prevProps.autoCenter !== this.props.autoCenter
       && this.props.autoCenter) {
       this.autoCenter(this.props.autoCenterZoomLevel)
+    }
+    if (
+      (prevState.x !== this.state.x
+      || prevState.y !== this.state.y
+      || prevState.scale!== this.state.scale
+      || prevState.rotate !== this.state.scale.rotate)
+      && this.props.onChange
+    ) {
+      this.props.onChange({
+        x: this.state.x,
+        y: this.state.y,
+        scale: this.state.scale,
+        rotate: this.state.rotate
+      })
     }
   }
 

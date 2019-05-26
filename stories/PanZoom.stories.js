@@ -193,3 +193,18 @@ storiesOf('react-easy-panzoom', module)
       </Box>
     </DefaultPanZoom>
   ))
+  .add('onChange handler', () => {
+    return (
+      <>
+        <DefaultPanZoom
+          onChange={(data) =>{
+           console.log(data)
+          }}     
+        >
+          <Box>
+            Open the console then move me
+          </Box>
+        </DefaultPanZoom>
+      </>
+    )
+  })
