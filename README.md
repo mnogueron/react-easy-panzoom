@@ -153,6 +153,8 @@ render() {
 |preventPan|`func`| |Defines a function to prevent pan|
 |style|`object`| |Override the inline-styles of the root element|
 
+You can also pass in every other props you would pass to a `div` element. Those will be passed through to the container component. This is helpful for adding custom event handlers.
+
 ## Methods
 By using `ref`, methods from `PanZoom` can be accessed and called to trigger manipulation functions.
 
