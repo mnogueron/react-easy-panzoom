@@ -186,7 +186,7 @@ storiesOf('react-easy-panzoom', module)
   .add('Disable Double Click Zoom Event', () => (
     <DefaultPanZoom
       maxZoom={Infinity}
-      disableDoubleClickZoom={boolean('Disabel Double Click Zoom', true)}
+      disableDoubleClickZoom={boolean('Disable Double Click Zoom', true)}
     >
       <Box>
         Double Click should not zoom
