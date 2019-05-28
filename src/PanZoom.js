@@ -713,7 +713,7 @@ class PanZoom extends React.Component<Props> {
       onMouseDown,
       onKeyDown,
       onTouchStart,
-      ...props
+      ...restPassThroughProps
     } = this.props
     const { x, y, scale, rotate } = this.state
     const { a, b, c, d, x: transformX, y: transformY} = this.getTransformMatrix(x, y, scale, rotate)
@@ -739,7 +739,7 @@ class PanZoom extends React.Component<Props> {
         onKeyDown={this.onKeyDown}
         onTouchStart={this.onTouchStart}
         style={{ cursor: disabled ? 'initial' : 'pointer', ...style }}
-        {...props}
+        {...restPassThroughProps}
       >
         <div
           ref={ref => this.dragContainer = ref}
