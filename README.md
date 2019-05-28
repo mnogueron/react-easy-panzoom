@@ -137,6 +137,7 @@ render() {
 |doubleZoomSpeed|`number`|1.75|Sets the zoom speed for double click|
 |disabled|`bool`|false|Disable pan and zoom|
 |disableKeyInteraction|`bool`|false|Disable keyboard interaction|
+|disableDoubleClickZoom|`bool`|false|Disable zoom when performing a double click|
 |realPinch|`bool`|false|Enable real pinch interaction for touch events|
 |keyMapping|`object`|false|Define specific key mapping for keyboard interaction (e.g. `{ '<keyCode>': { x: 0, y: 1, z: 0 } }`, with `<keyCode>` being the key code to map)|
 |minZoom|`number`| |Sets the minimum zoom value|

@@ -183,3 +183,13 @@ storiesOf('react-easy-panzoom', module)
       realPinch={boolean('Enable real pinch', false)}
     />
   ))
+  .add('Disable Double Click Zoom Event', () => (
+    <DefaultPanZoom
+      maxZoom={Infinity}
+      disableDoubleClickZoom={boolean('Disable Double Click Zoom', true)}
+    >
+      <Box>
+        Double Click should not zoom
+      </Box>
+    </DefaultPanZoom>
+  ))
