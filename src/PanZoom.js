@@ -744,7 +744,7 @@ class PanZoom extends React.Component<Props> {
       )
       warning(
         onTouchStart === undefined || typeof onTouchStart === 'function',
-        "Warning: Expected `onTouchStart` listener to be a function, instead got a value of `%s` type.",
+        "Expected `onTouchStart` listener to be a function, instead got a value of `%s` type.",
         typeof onTouchStart
       )
     }
