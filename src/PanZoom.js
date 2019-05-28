@@ -1,6 +1,6 @@
 // @flow
 import * as React from 'react'
-
+import warning from 'warning';
 type Props = {
   zoomSpeed?: number,
   doubleZoomSpeed?: number,
@@ -133,9 +133,11 @@ class PanZoom extends React.Component<Props> {
 
   onDoubleClick = (e) => {
     const { onDoubleClick, disableDoubleClickZoom, doubleZoomSpeed } = this.props
-    if (onDoubleClick !== undefined) {
+
+    if (typeof onDoubleClick === 'function') {
       onDoubleClick(e)
     }
+
     if (disableDoubleClickZoom) {
       return
     }
@@ -146,9 +148,11 @@ class PanZoom extends React.Component<Props> {
 
   onMouseDown = (e) => {
     const { preventPan, onMouseDown } = this.props
-    if (onMouseDown !== undefined) {
+
+    if (typeof onMouseDown === 'function') {
       onMouseDown(e)
     }
+
     if (this.props.disabled) {
       return
     }
@@ -236,8 +240,9 @@ class PanZoom extends React.Component<Props> {
 
   onKeyDown = (e) => {
     const { keyMapping, disableKeyInteraction, onKeyDown } = this.props
-    if (onKeyDown !== undefined) {
-      onKeyDown(e)
+
+    if (typeof onKeyDown === 'function') {
+        onKeyDown(e)
     }
 
     if (disableKeyInteraction) {
@@ -280,9 +285,10 @@ class PanZoom extends React.Component<Props> {
 
   onTouchStart = (e) => {
     const { preventPan, onTouchStart } = this.props
-    if (onTouchStart !== undefined) {
+    if (typeof onTouchStart === 'function') {
       onTouchStart(e)
     }
+
     if (e.touches.length === 1) {
       // Drag
       const touch = e.touches[0]
@@ -718,6 +724,29 @@ class PanZoom extends React.Component<Props> {
     const { x, y, scale, rotate } = this.state
     const { a, b, c, d, x: transformX, y: transformY} = this.getTransformMatrix(x, y, scale, rotate)
     const transform = this.getTransformMatrixString(a, b, c, d, transformX, transformY)
+
+    if (process.env.NODE_ENV !== 'production') {
+      warning(
+        onDoubleClick === undefined || typeof onDoubleClick === 'function',
+        "Expected `onDoubleClick` listener to be a function, instead got a value of `%s` type.",
+        typeof onDoubleClick
+      )
+      warning(
+        onMouseDown === undefined || typeof onMouseDown === 'function',
+        "Expected `onMouseDown` listener to be a function, instead got a value of `%s` type.",
+        typeof onMouseDown
+      )
+      warning(
+        onKeyDown === undefined || typeof onKeyDown === 'function',
+        "Expected `onKeyDown` listener to be a function, instead got a value of `%s` type.",
+        typeof onKeyDown
+      )
+      warning(
+        onTouchStart === undefined || typeof onTouchStart === 'function',
+        "Warning: Expected `onTouchStart` listener to be a function, instead got a value of `%s` type.",
+        typeof onTouchStart
+      )
+    }
 
     return (
       <div
