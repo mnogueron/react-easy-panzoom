@@ -3,6 +3,7 @@
 [![Code](https://img.shields.io/github/issues/mnogueron/react-easy-panzoom.svg?style=plastic)](https://github.com/mnogueron/react-easy-panzoom)
 [![npm](https://img.shields.io/npm/v/react-easy-panzoom.svg?style=plastic)](https://www.npmjs.com/package/react-easy-panzoom)
 [![Code](https://img.shields.io/npm/dt/react-easy-panzoom.svg?style=plastic)](https://www.npmjs.com/package/react-easy-panzoom)
+[![Code](https://travis-ci.com/mnogueron/react-easy-panzoom.svg?branch=master)](https://travis-ci.com/mnogueron/react-easy-panzoom)
 
 ![react-easy-panzoom-demo](https://user-images.githubusercontent.com/8511318/55997819-2ff98700-5cbc-11e9-99f5-67ea295f4f92.gif)
 
