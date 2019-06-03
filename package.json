@@ -15,7 +15,7 @@
     "prepublish": "npm run lib",
     "storybook": "start-storybook -p 6006",
     "build": "webpack",
-    "test": "jest --watchAll --coverage",
+    "test": "jest",
     "build:cjs": "cross-env NODE_ENV=production babel --config-file ./babel.config.js ./src --out-dir ./lib --ignore \"**/*.test.js\""
   },
   "files": [
@@ -61,20 +61,5 @@
     "webpack": "^4.29.6",
     "webpack-cli": "^3.3.0",
     "webpack-node-externals": "^1.7.2"
-  },
-  "jest": {
-    "moduleFileExtensions": [
-      "ts",
-      "tsx",
-      "js",
-      "jsx"
-    ],
-    "testMatch": [
-      "**/*.(spec|test).{js,jsx,ts,tsx}",
-      "**/__tests__/*.{js,jsx,ts,tsx}"
-    ],
-    "coverageReporters": [
-      "html"
-    ]
   }
 }
