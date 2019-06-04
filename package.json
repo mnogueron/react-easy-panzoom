@@ -16,6 +16,7 @@
     "storybook": "start-storybook -p 6006",
     "build": "webpack",
     "test": "jest",
+    "flow": "flow",
     "build:cjs": "cross-env NODE_ENV=production babel --config-file ./babel.config.js ./src --out-dir ./lib --ignore \"**/*.test.js\""
   },
   "files": [
