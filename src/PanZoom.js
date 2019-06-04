@@ -1,6 +1,6 @@
 // @flow
 import * as React from 'react'
-
+import warning from 'warning'
 type Props = {
   zoomSpeed?: number,
   doubleZoomSpeed?: number,
@@ -132,16 +132,27 @@ class PanZoom extends React.Component<Props> {
   }
 
   onDoubleClick = (e) => {
-    const { disableDoubleClickZoom, doubleZoomSpeed } = this.props
+    const { onDoubleClick, disableDoubleClickZoom, doubleZoomSpeed } = this.props
+
+    if (typeof onDoubleClick === 'function') {
+      onDoubleClick(e)
+    }
+
     if (disableDoubleClickZoom) {
       return
     }
+
     const offset = this.getOffset(e)
     this.zoomTo(offset.x, offset.y, doubleZoomSpeed)
   }
 
   onMouseDown = (e) => {
-    const { preventPan } = this.props
+    const { preventPan, onMouseDown } = this.props
+
+    if (typeof onMouseDown === 'function') {
+      onMouseDown(e)
+    }
+
     if (this.props.disabled) {
       return
     }
@@ -228,7 +239,11 @@ class PanZoom extends React.Component<Props> {
   }
 
   onKeyDown = (e) => {
-    const { keyMapping, disableKeyInteraction } = this.props
+    const { keyMapping, disableKeyInteraction, onKeyDown } = this.props
+
+    if (typeof onKeyDown === 'function') {
+        onKeyDown(e)
+    }
 
     if (disableKeyInteraction) {
       return
@@ -269,7 +284,11 @@ class PanZoom extends React.Component<Props> {
   }
 
   onTouchStart = (e) => {
-    const { preventPan } = this.props
+    const { preventPan, onTouchStart } = this.props
+    if (typeof onTouchStart === 'function') {
+      onTouchStart(e)
+    }
+
     if (e.touches.length === 1) {
       // Drag
       const touch = e.touches[0]
@@ -675,10 +694,60 @@ class PanZoom extends React.Component<Props> {
   }
 
   render() {
-    const { children, style, disabled, disableKeyInteraction } = this.props
+    const {
+      children,
+      autoCenter,
+      autoCenterZoomLevel,
+      zoomSpeed,
+      doubleZoomSpeed,
+      disabled,
+      disableDoubleClickZoom,
+      disableKeyInteraction,
+      realPinch,
+      keyMapping,
+      minZoom,
+      maxZoom,
+      enableBoundingBox,
+      boundaryRatioVertical,
+      boundaryRatioHorizontal,
+      noStateUpdate,
+      onPanStart,
+      onPan,
+      onPanEnd,
+      preventPan,
+      style,
+      onDoubleClick,
+      onMouseDown,
+      onKeyDown,
+      onTouchStart,
+      ...restPassThroughProps
+    } = this.props
     const { x, y, scale, rotate } = this.state
     const { a, b, c, d, x: transformX, y: transformY} = this.getTransformMatrix(x, y, scale, rotate)
     const transform = this.getTransformMatrixString(a, b, c, d, transformX, transformY)
+
+    if (process.env.NODE_ENV !== 'production') {
+      warning(
+        onDoubleClick === undefined || typeof onDoubleClick === 'function',
+        "Expected `onDoubleClick` listener to be a function, instead got a value of `%s` type.",
+        typeof onDoubleClick
+      )
+      warning(
+        onMouseDown === undefined || typeof onMouseDown === 'function',
+        "Expected `onMouseDown` listener to be a function, instead got a value of `%s` type.",
+        typeof onMouseDown
+      )
+      warning(
+        onKeyDown === undefined || typeof onKeyDown === 'function',
+        "Expected `onKeyDown` listener to be a function, instead got a value of `%s` type.",
+        typeof onKeyDown
+      )
+      warning(
+        onTouchStart === undefined || typeof onTouchStart === 'function',
+        "Expected `onTouchStart` listener to be a function, instead got a value of `%s` type.",
+        typeof onTouchStart
+      )
+    }
 
     return (
       <div
@@ -700,6 +769,7 @@ class PanZoom extends React.Component<Props> {
         onKeyDown={this.onKeyDown}
         onTouchStart={this.onTouchStart}
         style={{ cursor: disabled ? 'initial' : 'pointer', ...style }}
+        {...restPassThroughProps}
       >
         <div
           ref={ref => this.dragContainer = ref}
