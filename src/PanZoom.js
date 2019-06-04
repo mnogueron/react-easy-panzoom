@@ -2,7 +2,7 @@
 import * as React from 'react'
 import warning from 'warning'
 
-type OnChangeData = {
+type OnStateChangeData = {
   x: number,
   y: number,
   scale: number,
@@ -27,7 +27,7 @@ type Props = {
   onPanStart?: (any) => void,
   onPan?: (any) => void,
   onPanEnd?: (any) => void,
-  onChange?: (data: OnChangeData) => void,
+  onStateChange?: (data: OnStateChangeData) => void,
 }
 
 // Transform matrix use to rotate, zoom and pan
@@ -135,9 +135,9 @@ class PanZoom extends React.Component<Props> {
       || prevState.y !== this.state.y
       || prevState.scale !== this.state.scale
       || prevState.rotate !== this.state.rotate)
-      && this.props.onChange
+      && this.props.onStateChange
     ) {
-      this.props.onChange({
+      this.props.onStateChange({
         x: this.state.x,
         y: this.state.y,
         scale: this.state.scale,
