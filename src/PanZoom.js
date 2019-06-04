@@ -1,6 +1,6 @@
 // @flow
 import * as React from 'react'
-import warning from 'warning';
+import warning from 'warning'
 type Props = {
   zoomSpeed?: number,
   doubleZoomSpeed?: number,
