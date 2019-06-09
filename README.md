@@ -169,6 +169,8 @@ Available methods are listed below:
 |reset| |Reset the view to it's original state (will not auto center if `autoCenter` is enabled)|
 |moveByRatio|`(x: number, y: number, moveSpeedRatio?: number)`|Move the view along `x` or/and `y` axis|
 |rotate|`(angle: number \| (prevAngle) => newAngle)`|Rotate the view by the specified angle|
+|getDragContainer| |Returns the current drag container element (throws if it does not exist)|
+|getContainer| |Returns the current container div dom element (throws if it does not exist)|
 
 ## Thanks
 This react library is based on the awesome [panzoom][panzoom] by @anvaka. 
