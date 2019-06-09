@@ -1,4 +1,4 @@
-import React, { useRef } from 'react'
+import React, { useRef, useState } from 'react'
 
 import { storiesOf } from '@storybook/react'
 import { withKnobs, boolean, number } from '@storybook/addon-knobs';
@@ -15,8 +15,9 @@ const Box = ({ children }) => (
   </div>
 )
 
-const DefaultPanZoom = (props) => (
+const DefaultPanZoom = React.forwardRef((props, ref) => (
   <PanZoom
+    ref={ref}
     style={{ border: 'solid 1px green', height: 500, overflow: 'hidden' }}
     minZoom={0.5}
     maxZoom={3}
@@ -25,7 +26,7 @@ const DefaultPanZoom = (props) => (
     noStateUpdate={true}
     {...props}
   />
-)
+))
 
 const PanZoomPreventPan = () => {
 
@@ -127,6 +128,22 @@ const PanZoomControlUI = (props) => {
   )
 }
 
+const AutoCenterDemo = ({ animate }) => {
+  const ref = useRef(null)
+  const [checked, setChecked] = useState(false)
+
+  return  (
+    <DefaultPanZoom ref={ref}>
+      <div style={{ padding: 10, border: "2px solid red"}}>
+        Move me then{" "}
+        <button onClick={() => {
+          ref.current.autoCenter(1, animate)
+        }}>AutoCenter</button>
+      </div>
+    </DefaultPanZoom>
+  )
+}
+
 storiesOf('react-easy-panzoom', module)
   .addDecorator(withKnobs)
   .add('Basic', () => (
@@ -208,3 +225,4 @@ storiesOf('react-easy-panzoom', module)
       </>
     )
   })
+  .add("autoCenter animate option", () => <AutoCenterDemo animate={boolean("Animate auto center", true)} />)

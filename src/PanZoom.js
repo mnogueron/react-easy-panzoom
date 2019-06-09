@@ -150,7 +150,7 @@ class PanZoom extends React.Component<Props, State> {
       throw new Error('[PanZoom]: maxZoom props cannot be inferior to minZoom')
     }
     if (autoCenter) {
-      this.autoCenter(autoCenterZoomLevel)
+      this.autoCenter(autoCenterZoomLevel, false)
     }
   }
 
@@ -556,7 +556,7 @@ class PanZoom extends React.Component<Props, State> {
     return dragContainer
   }
 
-  autoCenter = (zoomLevel: number = 1) => {
+  autoCenter = (zoomLevel: number = 1, animate: boolean = true) => {
     const container = this.getContainer()
     const dragContainer = this.getDragContainer()
     const { minZoom, maxZoom } = this.props
@@ -577,7 +577,20 @@ class PanZoom extends React.Component<Props, State> {
 
     const x = (containerRect.width - (clientWidth * scale)) / 2
     const y = (containerRect.height - (clientHeight * scale)) / 2
-    this.setState({ x, y, scale, rotate: 0 })
+    
+    let afterStateUpdate = undefined
+    if (!animate) {
+      const transition = dragContainer.style.transition
+      dragContainer.style.transition = "none"
+      afterStateUpdate = () => {
+        setTimeout(() => { 
+          const dragContainer = this.getDragContainer()
+          dragContainer.style.transition = transition
+        }, 0)
+      }
+    }
+
+    this.setState({ x, y, scale, rotate: 0 }, afterStateUpdate)
   }
 
   moveByRatio = (x: number, y: number, moveSpeedRatio: number = 0.05) => {

@@ -165,7 +165,7 @@ Available methods are listed below:
 |---|---|---|
 |zoomIn| |Zoom in from the center of the `PanZoom` container|
 |zoomOut| |Zoom out from the center of the `PanZoom` container|
-|autoCenter| |Center and resize the view to fit the `PanZoom` container|
+|autoCenter|`(zoom: number, animate?: boolean = true)`|Center and resize the view to fit the `PanZoom` container|
 |reset| |Reset the view to it's original state (will not auto center if `autoCenter` is enabled)|
 |moveByRatio|`(x: number, y: number, moveSpeedRatio?: number)`|Move the view along `x` or/and `y` axis|
 |rotate|`(angle: number \| (prevAngle) => newAngle)`|Rotate the view by the specified angle|
