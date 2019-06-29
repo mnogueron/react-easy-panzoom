@@ -57,14 +57,15 @@ const PanZoomPreventPan = () => {
 }
 
 const PanZoomControlUI = (props) => {
+  const { zoomInSpeed, zoomOutSpeed, ...rest } = props
   const panZoom = useRef(null)
 
   function onZoomIn() {
-    panZoom.current && panZoom.current.zoomIn()
+    panZoom.current && panZoom.current.zoomIn(zoomInSpeed)
   }
 
   function onZoomOut() {
-    panZoom.current && panZoom.current.zoomOut()
+    panZoom.current && panZoom.current.zoomOut(zoomOutSpeed)
   }
 
   function moveByRatio(x, y) {
@@ -95,7 +96,7 @@ const PanZoomControlUI = (props) => {
         minZoom={0.5}
         maxZoom={3}
         autoCenter
-        {...props}
+        {...rest}
       >
         <ContentBox />
       </PanZoom>
@@ -130,15 +131,16 @@ const PanZoomControlUI = (props) => {
 
 const AutoCenterDemo = ({ animate }) => {
   const ref = useRef(null)
-  const [checked, setChecked] = useState(false)
+
+  function onClick() {
+    ref.current.autoCenter(1, animate)
+  }
 
   return  (
     <DefaultPanZoom ref={ref}>
       <div style={{ padding: 10, border: "2px solid red"}}>
         Move me then{" "}
-        <button onClick={() => {
-          ref.current.autoCenter(1, animate)
-        }}>AutoCenter</button>
+        <button onClick={onClick}>AutoCenter</button>
       </div>
     </DefaultPanZoom>
   )
@@ -198,6 +200,8 @@ storiesOf('react-easy-panzoom', module)
       boundaryRatioVertical={number('Vertical boundary ratio', 0.8, { range: true, min: -1, max: 2, step: 0.1 })}
       enableBoundingBox
       realPinch={boolean('Enable real pinch', false)}
+      zoomInSpeed={number('Controlled zoom in speed', 1, { range: true, min: 0.1, max: 2, step: 0.1 })}
+      zoomOutSpeed={number('Controlled zoom out speed', 1, { range: true, min: 0.1, max: 2, step: 0.1 })}
     />
   ))
   .add('Disable Double Click Zoom Event', () => (
@@ -225,4 +229,4 @@ storiesOf('react-easy-panzoom', module)
       </>
     )
   })
-  .add("autoCenter animate option", () => <AutoCenterDemo animate={boolean("Animate auto center", true)} />)
+  .add('autoCenter animate option', () => <AutoCenterDemo animate={boolean('Animate auto center', true)} />)
