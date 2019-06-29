@@ -521,8 +521,8 @@ class PanZoom extends React.Component<Props, State> {
     onPanEnd && onPanEnd(e)
   }
 
-  getScaleMultiplier = (delta: number) => {
-    let speed = 0.065 * this.props.zoomSpeed
+  getScaleMultiplier = (delta: number, zoomSpeed?: number) => {
+    let speed = 0.065 * (zoomSpeed || this.props.zoomSpeed)
     let scaleMultiplier = 1
     if (delta > 0) { // zoom out
       scaleMultiplier = (1 - speed)
@@ -684,9 +684,9 @@ class PanZoom extends React.Component<Props, State> {
     this.setState({ x: boundX, y: boundY, scale: newScale })
   }
 
-  centeredZoom = (delta: number) => {
+  centeredZoom = (delta: number, zoomSpeed?: number) => {
     const container = this.getContainer()
-    const scaleMultiplier = this.getScaleMultiplier(delta)
+    const scaleMultiplier = this.getScaleMultiplier(delta, zoomSpeed)
     const containerRect = container.getBoundingClientRect()
     this.zoomTo(containerRect.width / 2, containerRect.height / 2, scaleMultiplier)
   }
@@ -695,12 +695,12 @@ class PanZoom extends React.Component<Props, State> {
     this.setState({ x: 0, y: 0, scale: 1, rotate: 0 })
   }
 
-  zoomIn = () => {
-    this.centeredZoom(-1)
+  zoomIn = (zoomSpeed?: number) => {
+    this.centeredZoom(-1, zoomSpeed)
   }
 
-  zoomOut = () => {
-    this.centeredZoom(1)
+  zoomOut = (zoomSpeed?: number) => {
+    this.centeredZoom(1, zoomSpeed)
   }
 
   getOffset = (e: MouseEvent | Touch) => {
