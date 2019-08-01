@@ -6,7 +6,7 @@
   "author": "mnogueron",
   "repository": {
     "type": "git",
-    "url": "git@github.com:mnogueron/react-easy-panzoom.git"
+    "url": "https://github.com/mnogueron/react-easy-panzoom.git"
   },
   "license": "MIT",
   "scripts": {
