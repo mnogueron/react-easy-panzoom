@@ -214,6 +214,16 @@ storiesOf('react-easy-panzoom', module)
       </Box>
     </DefaultPanZoom>
   ))
+  .add('Disable Scroll Zoom Event', () => (
+    <DefaultPanZoom
+      maxZoom={Infinity}
+      disableScrollZoom={boolean('Disable Scroll Zoom', true)}
+    >
+      <Box>
+        Scroll should not zoom
+      </Box>
+    </DefaultPanZoom>
+  ))
   .add('onStateChange handler', () => {
     return (
       <>
