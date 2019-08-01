@@ -17,6 +17,7 @@ type Props = {
   autoCenterZoomLevel?: number,
   disableKeyInteraction?: boolean,
   disableDoubleClickZoom?: boolean,
+  disableScrollZoom?: boolean,
   realPinch?: boolean,
   keyMapping?: { [string]: { x: number, y: number, z: number }},
   minZoom: number,
@@ -105,6 +106,7 @@ class PanZoom extends React.Component<Props, State> {
     boundaryRatioVertical: 0.8,
     boundaryRatioHorizontal: 0.8,
     disableDoubleClickZoom: false,
+    disableScrollZoom: false,
     preventPan: () => false,
   }
 
@@ -281,7 +283,8 @@ class PanZoom extends React.Component<Props, State> {
   }
 
   onWheel = (e: WheelEvent) => {
-    if (this.props.disabled) {
+    const { disableScrollZoom, disabled } = this.props
+    if (disableScrollZoom || disabled) {
       return
     }
 
