@@ -793,6 +793,7 @@ class PanZoom extends React.Component<Props, State> {
       doubleZoomSpeed,
       disabled,
       disableDoubleClickZoom,
+      disableScrollZoom,
       disableKeyInteraction,
       realPinch,
       keyMapping,
