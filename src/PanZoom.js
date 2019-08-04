@@ -340,9 +340,13 @@ class PanZoom extends React.Component<Props, State> {
   }
 
   onTouchStart = (e: SyntheticTouchEvent<HTMLDivElement>) => {
-    const { preventPan, onTouchStart } = this.props
+    const { preventPan, onTouchStart, disabled } = this.props
     if (typeof onTouchStart === 'function') {
       onTouchStart(e)
+    }
+    
+    if (disabled) {
+      return
     }
 
     if (e.touches.length === 1) {
