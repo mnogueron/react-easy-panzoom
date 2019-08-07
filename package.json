@@ -4,6 +4,7 @@
   "description": "Wrapper to enable pan and zoom for any React component",
   "main": "./lib/index.js",
   "author": "mnogueron",
+  "homepage": "https://mnogueron.github.io/react-easy-panzoom",
   "repository": {
     "type": "git",
     "url": "https://github.com/mnogueron/react-easy-panzoom.git"
@@ -14,10 +15,13 @@
     "clean": "rm -rf lib && mkdir lib",
     "prepublishOnly": "npm run lib",
     "storybook": "start-storybook -p 6006",
+    "storybook:build": "build-storybook -s .storybook/public -c .storybook -o build-storybook",
+    "storybook:publish": "gh-pages -m 'Update storybook gh-pages' -d ./build-storybook",
     "build": "webpack",
     "test": "jest",
     "flow": "flow",
-    "build:cjs": "cross-env NODE_ENV=production babel --config-file ./babel.config.js ./src --out-dir ./lib --ignore \"**/*.test.js\""
+    "build:cjs": "cross-env NODE_ENV=production babel --config-file ./babel.config.js ./src --out-dir ./lib --ignore \"**/*.test.js\"",
+    "postpublish": "npm run storybook:publish"
   },
   "files": [
     "*.md",
@@ -56,6 +60,7 @@
     "babel-loader": "^8.0.5",
     "cross-env": "^5.2.0",
     "flow-bin": "^0.95.1",
+    "gh-pages": "2.0.1",
     "jest": "^24.8.0",
     "react": "^16.8.4",
     "react-dom": "^16.8.4",
