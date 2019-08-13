@@ -11,7 +11,6 @@ stages:
   - build
   - name: npm release
     if: tag IS present
-  - storybook release
 
 jobs:
   include:
@@ -32,7 +31,7 @@ jobs:
         skip_cleanup: true
         on:
           tags: true
-    - stage: storybook release
+    - # stage: storybook release
       script: skip
       before_deploy:
         - npm run storybook:build
@@ -43,4 +42,4 @@ jobs:
         keep_history: true
         local_dir: build-storybook
         on:
-          branch: master
+          tags: true
