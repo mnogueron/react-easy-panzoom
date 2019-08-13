@@ -1,10 +1,46 @@
 language: node_js
 node_js:
   - "stable"
+
 cache:
   directories:
     - node_modules
-script:
-  - npm test
-  - npm run lib
-  - npm run flow
+
+stages:
+  - test
+  - build
+  - name: npm release
+    if: tag IS present
+  - storybook release
+
+jobs:
+  include:
+    - stage: test
+      script: npm test
+    - # stage: flow check
+      script: npm run flow
+    - stage: build
+      script: npm run lib
+    - stage: npm release
+      script: skip
+      before_deploy:
+        - npm run lib
+      deploy:
+        provider: npm
+        email: "$NPM_EMAIL"
+        api_key: "$NPM_TOKEN"
+        skip_cleanup: true
+        on:
+          tags: true
+    - stage: storybook release
+      script: skip
+      before_deploy:
+        - npm run storybook:build
+      deploy:
+        provider: pages
+        skip_cleanup: true
+        github_token: $GITHUB_TOKEN
+        keep_history: true
+        local_dir: build-storybook
+        on:
+          branch: master
