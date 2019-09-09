@@ -49,6 +49,14 @@ export const getTransformedElementCoordinates = (angle, scale, offsetX, offsetY)
   }
 }
 
-export const preventDefault = (e) => {
-  e.preventDefault()
+export const getScaleMultiplier = (delta: number, zoomSpeed: number) => {
+  let speed = 0.065 * zoomSpeed
+  let scaleMultiplier = 1
+  if (delta > 0) { // zoom out
+    scaleMultiplier = (1 - speed)
+  } else if (delta < 0) { // zoom in
+    scaleMultiplier = (1 + speed)
+  }
+
+  return scaleMultiplier
 }

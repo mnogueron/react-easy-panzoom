@@ -1,7 +1,7 @@
 // @flow
 import * as React from 'react'
 import warning from 'warning'
-import { TransformMatrix, getTransformedElementCoordinates, preventDefault } from './utils'
+import { TransformMatrix, getTransformedElementCoordinates, getScaleMultiplier } from './maths'
 
 type OnStateChangeData = {
   x: number,
@@ -39,6 +39,10 @@ type State = {
   y: number,
   scale: number,
   rotate: number
+}
+
+const preventDefault = (e) => {
+  e.preventDefault()
 }
 
 class PanZoom extends React.Component<Props, State> {
@@ -219,8 +223,12 @@ class PanZoom extends React.Component<Props, State> {
   }
 
   onMouseUp = (e: MouseEvent) => {
+    const { noStateUpdate } = this.props
+
     // if using noStateUpdate we still need to set the new values in the state
-    this.dispatchStateUpdateIfNeeded()
+    if (noStateUpdate) {
+      this.setState(({ x: this.prevPanPosition.x, y: this.prevPanPosition.y }))
+    }
 
     this.triggerOnPanEnd(e)
     this.cleanMouseListeners()
@@ -229,12 +237,12 @@ class PanZoom extends React.Component<Props, State> {
   }
 
   onWheel = (e: WheelEvent) => {
-    const { disableScrollZoom, disabled } = this.props
+    const { disableScrollZoom, disabled, zoomSpeed } = this.props
     if (disableScrollZoom || disabled) {
       return
     }
 
-    const scale = this.getScaleMultiplier(e.deltaY)
+    const scale = getScaleMultiplier(e.deltaY, zoomSpeed)
     const offset = this.getOffset(e)
     this.zoomTo(offset.x, offset.y, scale)
     e.preventDefault()
@@ -342,7 +350,7 @@ class PanZoom extends React.Component<Props, State> {
   }
 
   onToucheMove = (e: TouchEvent) => {
-    const { realPinch, noStateUpdate } = this.props
+    const { realPinch, noStateUpdate, zoomSpeed } = this.props
     if (e.touches.length === 1) {
       e.stopPropagation()
       const touch = e.touches[0]
@@ -378,7 +386,7 @@ class PanZoom extends React.Component<Props, State> {
         } else if (currentPinZoomLength > this.pinchZoomLength) {
           delta = -1
         }
-        scaleMultiplier = this.getScaleMultiplier(delta)
+        scaleMultiplier = getScaleMultiplier(delta, zoomSpeed)
       }
 
       this.mousePos = {
@@ -406,18 +414,15 @@ class PanZoom extends React.Component<Props, State> {
         y: this.state.y,
       }
     } else {
-      this.dispatchStateUpdateIfNeeded()
+      const { noStateUpdate } = this.props
+      if (noStateUpdate) {
+        this.setState(({ x: this.prevPanPosition.x, y: this.prevPanPosition.y }))
+      }
+
       this.touchInProgress = false
 
       this.triggerOnPanEnd(e)
       this.cleanTouchListeners()
-    }
-  }
-
-  dispatchStateUpdateIfNeeded = () => {
-    const { noStateUpdate } = this.props
-    if (noStateUpdate) {
-      this.setState(({ x: this.prevPanPosition.x, y: this.prevPanPosition.y }))
     }
   }
 
@@ -473,33 +478,25 @@ class PanZoom extends React.Component<Props, State> {
 
   triggerOnPanStart = (e: MouseEvent | TouchEvent) => {
     const { onPanStart } = this.props
-    if (!this.panStartTriggered) {
-      onPanStart && onPanStart(e)
+    if (!this.panStartTriggered && onPanStart && typeof onPanStart === 'function') {
+      onPanStart(e)
     }
     this.panStartTriggered = true
   }
 
   triggerOnPan = (e: MouseEvent | TouchEvent) => {
     const { onPan } = this.props
-    onPan && onPan(e)
+    if (typeof onPan === 'function') {
+      onPan(e)
+    }
   }
 
   triggerOnPanEnd = (e: MouseEvent | TouchEvent) => {
     const { onPanEnd } = this.props
     this.panStartTriggered = false
-    onPanEnd && onPanEnd(e)
-  }
-
-  getScaleMultiplier = (delta: number, zoomSpeed?: number) => {
-    let speed = 0.065 * (zoomSpeed || this.props.zoomSpeed)
-    let scaleMultiplier = 1
-    if (delta > 0) { // zoom out
-      scaleMultiplier = (1 - speed)
-    } else if (delta < 0) { // zoom in
-      scaleMultiplier = (1 + speed)
+    if (typeof onPanEnd === 'function') {
+      onPanEnd(e)
     }
-
-    return scaleMultiplier
   }
 
   getPinchZoomLength = (finger1: Touch, finger2: Touch) => {
@@ -655,7 +652,7 @@ class PanZoom extends React.Component<Props, State> {
 
   centeredZoom = (delta: number, zoomSpeed?: number) => {
     const container = this.getContainer()
-    const scaleMultiplier = this.getScaleMultiplier(delta, zoomSpeed)
+    const scaleMultiplier = getScaleMultiplier(delta, zoomSpeed || this.props.zoomSpeed)
     const containerRect = container.getBoundingClientRect()
     this.zoomTo(containerRect.width / 2, containerRect.height / 2, scaleMultiplier)
   }
