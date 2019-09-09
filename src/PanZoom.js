@@ -556,6 +556,7 @@ class PanZoom extends React.Component<Props, State> {
       }
     }
 
+    this.prevPanPosition = { x, y }
     this.setState({ x, y, scale, rotate: 0 }, afterStateUpdate)
   }
 
