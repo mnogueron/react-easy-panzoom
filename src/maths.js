@@ -1,4 +1,4 @@
-type TransformationMatrix = {
+export type TransformationMatrix = {
   a: number,
   b: number,
   c: number,
@@ -7,19 +7,19 @@ type TransformationMatrix = {
   y: number,
 }
 
-type BoundingBox = {
+export type BoundingBox = {
   top: number,
   left: number,
   width: number,
   height: number,
 }
 
-type BoundaryRatio = {
+export type BoundaryRatio = {
   vertical: number,
   horizontal: number,
 }
 
-type Coordinates = {
+export type Coordinates = {
   x: number,
   y: number,
 }
