@@ -567,7 +567,7 @@ class PanZoom extends React.Component<Props, State> {
     const dx = offset * moveSpeedRatio * x
     const dy = offset * moveSpeedRatio * y
 
-    this.moveBy(dx, dy)
+    this.moveBy(dx, dy, false)
   }
 
   moveBy = (dx: number, dy: number, noStateUpdate?: boolean = true) => {
@@ -648,7 +648,7 @@ class PanZoom extends React.Component<Props, State> {
     const newY = y - ratio * (y - transformY)
 
     const { boundX, boundY } = this.getBoundCoordinates(newX, newY, scale, rotate, newX, newY)
-    this.prevPanPosition = { boundX, boundY }
+    this.prevPanPosition = { x: boundX, y: boundY }
     this.setState({ x: boundX, y: boundY, scale: newScale })
   }
 
