@@ -339,6 +339,22 @@ class PanZoom extends React.Component<Props, State> {
     }
   }
 
+  onKeyUp = (e: SyntheticKeyboardEvent<HTMLDivElement>) => {
+    const { disableKeyInteraction, onKeyDown } = this.props
+
+    if (typeof onKeyDown === 'function') {
+        onKeyDown(e)
+    }
+
+    if (disableKeyInteraction) {
+      return
+    }
+
+    if (this.prevPanPosition && (this.prevPanPosition.x !== this.state.x || this.prevPanPosition.y !== this.state.y)) {
+      this.setState(this.prevPanPosition)
+    }
+  }
+
   onTouchStart = (e: SyntheticTouchEvent<HTMLDivElement>) => {
     const { preventPan, onTouchStart, disabled } = this.props
     if (typeof onTouchStart === 'function') {
@@ -815,6 +831,7 @@ class PanZoom extends React.Component<Props, State> {
       onDoubleClick,
       onMouseDown,
       onKeyDown,
+      onKeyUp,
       onTouchStart,
       onStateChange,
       ...restPassThroughProps
@@ -838,6 +855,11 @@ class PanZoom extends React.Component<Props, State> {
         onKeyDown === undefined || typeof onKeyDown === 'function',
         "Expected `onKeyDown` listener to be a function, instead got a value of `%s` type.",
         typeof onKeyDown
+      )
+      warning(
+        onKeyUp === undefined || typeof onKeyUp === 'function',
+        "Expected `onKeyUp` listener to be a function, instead got a value of `%s` type.",
+        typeof onKeyUp
       )
       warning(
         onTouchStart === undefined || typeof onTouchStart === 'function',
@@ -864,6 +886,7 @@ class PanZoom extends React.Component<Props, State> {
         // see Chrome motivations https://developers.google.com/web/updates/2019/02/scrolling-intervention
         //onWheel={this.onWheel}
         onKeyDown={this.onKeyDown}
+        onKeyUp={this.onKeyUp}
         onTouchStart={this.onTouchStart}
         style={{ cursor: disabled ? 'initial' : 'pointer', ...style }}
         {...restPassThroughProps}
