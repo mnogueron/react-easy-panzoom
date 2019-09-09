@@ -33,6 +33,8 @@ export type TransformationParameters = {
   offsetY: number,
 }
 
+export const ZOOM_SPEED_MULTIPLIER = 0.065
+
 // Transform matrix use to rotate, zoom and pan
 // Can be written as T(centerX, centerY) * R(theta) * T(-centerX, -centerY) * S(scale, scale) + T(offsetX, offsetY)
 // ( a , c, x )
@@ -81,8 +83,8 @@ export const getTransformedBoundingBox = (transformationParameters: Transformati
   }
 }
 
-export const getScaleMultiplier = (delta: number, zoomSpeed: number): number => {
-  let speed = 0.065 * zoomSpeed
+export const getScaleMultiplier = (delta: number, zoomSpeed: number = 1): number => {
+  let speed = ZOOM_SPEED_MULTIPLIER * zoomSpeed
   let scaleMultiplier = 1
   if (delta > 0) { // zoom out
     scaleMultiplier = (1 - speed)
