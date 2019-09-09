@@ -14,12 +14,33 @@ type BoundingBox = {
   height: number,
 }
 
+type BoundaryRatio = {
+  vertical: number,
+  horizontal: number,
+}
+
+type Coordinates = {
+  x: number,
+  y: number,
+}
+
+export type BoundCoordinates = { boundX: number, boundY: number, offsetX: number, offsetY: number }
+
+export type TransformationParameters = {
+  angle: number,
+  scale: number,
+  offsetX: number,
+  offsetY: number,
+}
+
 // Transform matrix use to rotate, zoom and pan
 // Can be written as T(centerX, centerY) * R(theta) * T(-centerX, -centerY) * S(scale, scale) + T(offsetX, offsetY)
 // ( a , c, x )
 // ( b , d, y )
 // ( 0 , 0, 1 )
-export const TransformMatrix = (angle: number, centerX: number, centerY: number, scale: number, offsetX: number, offsetY: number): TransformationMatrix => {
+export const TransformMatrix = (transformationParameters: TransformationParameters, centerCoordinates: Coordinates, ): TransformationMatrix => {
+  const { angle, scale, offsetX, offsetY } = transformationParameters
+  const { x: centerX, y: centerY } = centerCoordinates
   const theta = angle * Math.PI / 180
   const a = Math.cos(theta) * scale
   const b = Math.sin(theta) * scale
@@ -30,20 +51,22 @@ export const TransformMatrix = (angle: number, centerX: number, centerY: number,
   return { a, b, c, d, x : transformX + offsetX, y: transformY + offsetY }
 }
 
-const applyTransformMatrix = (angle: number, centerX: number, centerY: number, scale: number, offsetX: number, offsetY: number) => (x, y): [number, number] => {
-  const { a, b, c, d, x: transformX, y: transformY } = TransformMatrix(angle, centerX, centerY, scale, offsetX, offsetY)
+const applyTransformMatrix = (transformationParameters: TransformationParameters, centerCoordinates: Coordinates) => (x, y): [number, number] => {
+  const { a, b, c, d, x: transformX, y: transformY } = TransformMatrix(transformationParameters, centerCoordinates)
   return [
     x * a + y * c + transformX,
     x * b + y * d + transformY,
   ]
 }
 
-export const getTransformedBoundingBox = (angle: number, scale: number, offsetX: number, offsetY: number, boundingBox: BoundingBox): BoundingBox => {
+export const getTransformedBoundingBox = (transformationParameters: TransformationParameters, boundingBox: BoundingBox): BoundingBox => {
   const { top, left, width, height } = boundingBox
-  const centerX = width / 2
-  const centerY = height / 2
+  const center = {
+    x: width / 2,
+    y: height / 2,
+  }
 
-  const getTransformedCoordinates = applyTransformMatrix(angle, centerX, centerY, scale, offsetX, offsetY)
+  const getTransformedCoordinates = applyTransformMatrix(transformationParameters, center)
 
   const [x1, y1] = getTransformedCoordinates(left, top)
   const [x2, y2] = getTransformedCoordinates(left + width, top)
@@ -72,15 +95,12 @@ export const getScaleMultiplier = (delta: number, zoomSpeed: number): number => 
 
 export const boundCoordinates = (
   x: number, y: number,
-  boundaryRatio: {
-    vertical: number,
-    horizontal: number,
-  },
-  elementMeasurement: BoundingBox,
+  boundaryRatio: BoundaryRatio,
+  boundingBox: BoundingBox,
   containerHeight: number, containerWidth: number,
-  offsetX?: number = 0, offsetY?: number = 0) => {
+  offsetX?: number = 0, offsetY?: number = 0): BoundCoordinates => {
 
-  const { top, left, width, height } = elementMeasurement
+  const { top, left, width, height } = boundingBox
   // check that computed are inside boundaries otherwise set to the bounding box limits
   let boundX = left
   let boundY = top

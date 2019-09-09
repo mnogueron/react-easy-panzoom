@@ -1,6 +1,7 @@
 // @flow
 import * as React from 'react'
 import warning from 'warning'
+import type { BoundCoordinates, TransformationParameters } from './maths'
 import { TransformMatrix, getTransformedBoundingBox, getScaleMultiplier, boundCoordinates } from './maths'
 import { captureTextSelection, releaseTextSelection } from './events'
 
@@ -8,7 +9,7 @@ type OnStateChangeData = {
   x: number,
   y: number,
   scale: number,
-  rotate: number
+  angle: number
 }
 
 type Props = {
@@ -39,7 +40,7 @@ type State = {
   x: number,
   y: number,
   scale: number,
-  rotate: number
+  angle: number
 }
 
 const getTransformMatrixString = (a: number, b: number, c: number, d: number, x: number, y: number) => {
@@ -89,7 +90,7 @@ class PanZoom extends React.Component<Props, State> {
     x: 0,
     y: 0,
     scale: 1,
-    rotate: 0,
+    angle: 0,
   }
 
   componentDidMount(): void {
@@ -116,14 +117,14 @@ class PanZoom extends React.Component<Props, State> {
       (prevState.x !== this.state.x
       || prevState.y !== this.state.y
       || prevState.scale !== this.state.scale
-      || prevState.rotate !== this.state.rotate)
+      || prevState.angle !== this.state.angle)
       && this.props.onStateChange
     ) {
       this.props.onStateChange({
         x: this.state.x,
         y: this.state.y,
         scale: this.state.scale,
-        rotate: this.state.rotate
+        angle: this.state.angle
       })
     }
   }
@@ -549,7 +550,7 @@ class PanZoom extends React.Component<Props, State> {
       }
     }
 
-    this.setState({ x, y, scale, rotate: 0 }, afterStateUpdate)
+    this.setState({ x, y, scale, angle: 0 }, afterStateUpdate)
   }
 
   moveByRatio = (x: number, y: number, moveSpeedRatio: number = 0.05) => {
@@ -563,13 +564,13 @@ class PanZoom extends React.Component<Props, State> {
   }
 
   moveBy = (dx: number, dy: number, noStateUpdate?: boolean = true) => {
-    const { x, y, scale, rotate } = this.state
+    const { x, y, scale, angle } = this.state
 
     // Allow better performance by not updating the state on every change
     if (noStateUpdate) {
-      const { x: prevTransformX, y: prevTransformY } = this.getTransformMatrix(this.prevPanPosition.x, this.prevPanPosition.y, scale, rotate)
-      const { a, b, c, d, x: transformX, y: transformY} = this.getTransformMatrix(this.prevPanPosition.x + dx, this.prevPanPosition.y + dy, scale, rotate)
-      const { boundX, boundY, offsetX, offsetY } = this.getBoundCoordinates(transformX, transformY, scale, rotate, this.prevPanPosition.x + dx, this.prevPanPosition.y + dy)
+      const { x: prevTransformX, y: prevTransformY } = this.getTransformMatrix(this.prevPanPosition.x, this.prevPanPosition.y, scale, angle)
+      const { a, b, c, d, x: transformX, y: transformY} = this.getTransformMatrix(this.prevPanPosition.x + dx, this.prevPanPosition.y + dy, scale, angle)
+      const { boundX, boundY, offsetX, offsetY } = this.getBoundCoordinates(transformX, transformY, { angle, scale, offsetX: this.prevPanPosition.x + dx, offsetY: this.prevPanPosition.y + dy })
 
       const intermediateX = prevTransformX + (prevTransformX - boundX) / 2
       const intermediateY = prevTransformY + (prevTransformY - boundY) / 2
@@ -591,8 +592,8 @@ class PanZoom extends React.Component<Props, State> {
       this.frameAnimation = window.requestAnimationFrame(this.applyTransform)
     }
     else {
-      const { x: transformX, y: transformY} = this.getTransformMatrix(x + dx, y + dy, scale, rotate)
-      const { boundX, boundY } = this.getBoundCoordinates(transformX, transformY, scale, rotate, x + dx, y + dy)
+      const { x: transformX, y: transformY} = this.getTransformMatrix(x + dx, y + dy, scale, angle)
+      const { boundX, boundY } = this.getBoundCoordinates(transformX, transformY, { angle, scale, offsetX: x + dx, offsetY: y + dy })
 
       this.setState(({
         x: x + dx - (transformX - boundX),
@@ -602,14 +603,14 @@ class PanZoom extends React.Component<Props, State> {
   }
 
   rotate = (value: number | (prevAngle: number) => number) => {
-    const { rotate } = this.state
+    const { angle } = this.state
     let newAngle: number
     if (typeof value === 'function') {
-      newAngle = value(rotate)
+      newAngle = value(angle)
     } else {
       newAngle = value
     }
-    this.setState({ rotate: newAngle })
+    this.setState({ angle: newAngle })
   }
 
   zoomAbs = (x: number, y: number, zoomLevel: number) => {
@@ -618,7 +619,7 @@ class PanZoom extends React.Component<Props, State> {
 
   zoomTo = (x: number, y: number, ratio: number) => {
     const { minZoom, maxZoom } = this.props
-    const { x: transformX, y: transformY, scale, rotate } = this.state
+    const { x: transformX, y: transformY, scale, angle } = this.state
 
     let newScale = scale * ratio
     if (newScale < minZoom) {
@@ -639,7 +640,7 @@ class PanZoom extends React.Component<Props, State> {
     const newX = x - ratio * (x - transformX)
     const newY = y - ratio * (y - transformY)
 
-    const { boundX, boundY } = this.getBoundCoordinates(newX, newY, scale, rotate, newX, newY)
+    const { boundX, boundY } = this.getBoundCoordinates(newX, newY, { angle, scale, offsetX: newX, offsetY: newY })
     this.setState({ x: boundX, y: boundY, scale: newScale })
   }
 
@@ -659,7 +660,7 @@ class PanZoom extends React.Component<Props, State> {
   }
 
   reset = () => {
-    this.setState({ x: 0, y: 0, scale: 1, rotate: 0 })
+    this.setState({ x: 0, y: 0, scale: 1, angle: 0 })
   }
 
   getOffset = (e: MouseEvent | Touch) => {
@@ -669,7 +670,7 @@ class PanZoom extends React.Component<Props, State> {
     return { x: offsetX, y: offsetY }
   }
 
-  getTransformMatrix = (x: number, y: number, scale: number, rotate: number) => {
+  getTransformMatrix = (x: number, y: number, scale: number, angle: number) => {
     if (!this.dragContainer.current) {
       return { a: scale, b: 0, c: 0, d: scale, x, y }
     }
@@ -678,7 +679,7 @@ class PanZoom extends React.Component<Props, State> {
     const centerX = clientWidth / 2
     const centerY = clientHeight / 2
 
-    return TransformMatrix(rotate, centerX, centerY, scale, x, y)
+    return TransformMatrix({ angle, scale, offsetX: x, offsetY: y }, { x: centerX, y: centerY })
   }
 
   // Apply transform through rAF
@@ -693,8 +694,9 @@ class PanZoom extends React.Component<Props, State> {
     this.intermediateFrameAnimation = 0
   }
 
-  getBoundCoordinates = (x: number, y: number, newScale: number, rotate?: number = 0, offsetX?: number = 0, offsetY?: number = 0) => {
+  getBoundCoordinates = (x: number, y: number, transformationParameters: TransformationParameters): BoundCoordinates => {
     const { enableBoundingBox, boundaryRatioVertical, boundaryRatioHorizontal } = this.props
+    const { offsetX = 0, offsetY = 0 } = transformationParameters
 
     if (!enableBoundingBox) {
       return {
@@ -707,10 +709,11 @@ class PanZoom extends React.Component<Props, State> {
 
     const { height: containerHeight, width: containerWidth } = this.getContainer().getBoundingClientRect()
     const { clientTop, clientLeft, clientWidth, clientHeight } = this.getDragContainer()
+    const clientBoundingBox = { top: clientTop, left: clientLeft, width: clientWidth, height: clientHeight }
 
     return boundCoordinates(x, y,
       { vertical: boundaryRatioVertical, horizontal: boundaryRatioHorizontal },
-      getTransformedBoundingBox(rotate, newScale, offsetX, offsetY, { top: clientTop, left: clientLeft, width: clientWidth, height: clientHeight }),
+      getTransformedBoundingBox(transformationParameters, clientBoundingBox),
       containerHeight, containerWidth,
       offsetX, offsetY)
   }
@@ -747,8 +750,8 @@ class PanZoom extends React.Component<Props, State> {
       onStateChange,
       ...restPassThroughProps
     } = this.props
-    const { x, y, scale, rotate } = this.state
-    const { a, b, c, d, x: transformX, y: transformY} = this.getTransformMatrix(x, y, scale, rotate)
+    const { x, y, scale, angle } = this.state
+    const { a, b, c, d, x: transformX, y: transformY} = this.getTransformMatrix(x, y, scale, angle)
     const transform = getTransformMatrixString(a, b, c, d, transformX, transformY)
 
     if (process.env.NODE_ENV !== 'production') {
