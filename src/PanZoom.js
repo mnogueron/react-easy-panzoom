@@ -1,7 +1,8 @@
 // @flow
 import * as React from 'react'
 import warning from 'warning'
-import { TransformMatrix, getTransformedElementCoordinates, getScaleMultiplier } from './maths'
+import { TransformMatrix, getTransformedElementCoordinates, getScaleMultiplier, boundCoordinates } from './maths'
+import { captureTextSelection, releaseTextSelection } from './events'
 
 type OnStateChangeData = {
   x: number,
@@ -41,8 +42,8 @@ type State = {
   rotate: number
 }
 
-const preventDefault = (e) => {
-  e.preventDefault()
+const getTransformMatrixString = (a: number, b: number, c: number, d: number, x: number, y: number) => {
+  return `matrix(${a}, ${b}, ${c}, ${d}, ${x}, ${y})`
 }
 
 class PanZoom extends React.Component<Props, State> {
@@ -130,7 +131,7 @@ class PanZoom extends React.Component<Props, State> {
   componentWillUnmount(): void {
     this.cleanMouseListeners()
     this.cleanTouchListeners()
-    this.releaseTextSelection()
+    releaseTextSelection()
     if (this.container.current) {
       this.container.current.removeEventListener('wheel', this.onWheel, { passive: false })
     }
@@ -197,7 +198,7 @@ class PanZoom extends React.Component<Props, State> {
     this.setMouseListeners()
 
     // Prevent text selection
-    this.captureTextSelection()
+    captureTextSelection()
   }
 
   onMouseMove = (e: MouseEvent) => {
@@ -233,7 +234,7 @@ class PanZoom extends React.Component<Props, State> {
     this.triggerOnPanEnd(e)
     this.cleanMouseListeners()
     this.panning = false
-    this.releaseTextSelection()
+    releaseTextSelection()
   }
 
   onWheel = (e: WheelEvent) => {
@@ -468,14 +469,6 @@ class PanZoom extends React.Component<Props, State> {
     }
   }
 
-  captureTextSelection = () => {
-    window.addEventListener('selectstart', preventDefault)
-  }
-
-  releaseTextSelection = () => {
-    window.removeEventListener('selectstart', preventDefault)
-  }
-
   triggerOnPanStart = (e: MouseEvent | TouchEvent) => {
     const { onPanStart } = this.props
     if (!this.panStartTriggered && onPanStart && typeof onPanStart === 'function') {
@@ -581,8 +574,8 @@ class PanZoom extends React.Component<Props, State> {
       const intermediateX = prevTransformX + (prevTransformX - boundX) / 2
       const intermediateY = prevTransformY + (prevTransformY - boundY) / 2
 
-      this.intermediateTransformMatrixString = this.getTransformMatrixString(a, b, c, d, intermediateX, intermediateY)
-      this.transformMatrixString = this.getTransformMatrixString(a, b, c, d, boundX, boundY)
+      this.intermediateTransformMatrixString = getTransformMatrixString(a, b, c, d, intermediateX, intermediateY)
+      this.transformMatrixString = getTransformMatrixString(a, b, c, d, boundX, boundY)
 
       // get bound x / y coords without the rotation offset
       this.prevPanPosition = {
@@ -657,16 +650,16 @@ class PanZoom extends React.Component<Props, State> {
     this.zoomTo(containerRect.width / 2, containerRect.height / 2, scaleMultiplier)
   }
 
-  reset = () => {
-    this.setState({ x: 0, y: 0, scale: 1, rotate: 0 })
-  }
-
   zoomIn = (zoomSpeed?: number) => {
     this.centeredZoom(-1, zoomSpeed)
   }
 
   zoomOut = (zoomSpeed?: number) => {
     this.centeredZoom(1, zoomSpeed)
+  }
+
+  reset = () => {
+    this.setState({ x: 0, y: 0, scale: 1, rotate: 0 })
   }
 
   getOffset = (e: MouseEvent | Touch) => {
@@ -686,10 +679,6 @@ class PanZoom extends React.Component<Props, State> {
     const centerY = clientHeight / 2
 
     return TransformMatrix(rotate, centerX, centerY, scale, x, y)
-  }
-
-  getTransformMatrixString = (a: number, b: number, c: number, d: number, x: number, y: number) => {
-    return `matrix(${a}, ${b}, ${c}, ${d}, ${x}, ${y})`
   }
 
   // Apply transform through rAF
@@ -717,34 +706,10 @@ class PanZoom extends React.Component<Props, State> {
     }
 
     const { height: containerHeight, width: containerWidth } = this.getContainer().getBoundingClientRect()
-    const { top, left, width, height } = getTransformedElementCoordinates(rotate, newScale, offsetX, offsetY)(this.getDragContainer())
+    const { clientTop, clientLeft, clientWidth, clientHeight } = this.getDragContainer()
+    const { top, left, width, height } = getTransformedElementCoordinates(rotate, newScale, offsetX, offsetY, clientTop, clientLeft, clientWidth, clientHeight)
 
-    // check that computed are inside boundaries otherwise set to the bounding box limits
-    let boundX = left
-    let boundY = top
-
-    if (boundY < -boundaryRatioVertical * height) {
-      boundY = -boundaryRatioVertical * height
-    }
-    else if (boundY > containerHeight - (1 - boundaryRatioVertical) * height) {
-      boundY = containerHeight - (1 - boundaryRatioVertical) * height
-    }
-
-    if (boundX < -boundaryRatioHorizontal * width) {
-      boundX = -boundaryRatioHorizontal * width
-    }
-    else if (boundX > containerWidth - (1 - boundaryRatioHorizontal) * width) {
-      boundX = containerWidth - (1 - boundaryRatioHorizontal) * width
-    }
-
-    // return new bounds coordinates for the transform matrix
-    // not the computed x/y coordinates
-    return {
-      boundX: x - (left - boundX),
-      boundY: y - (top - boundY),
-      offsetX: offsetX - (left - boundX),
-      offsetY: offsetY - (top - boundY),
-    }
+    return boundCoordinates(x, y, boundaryRatioVertical, boundaryRatioHorizontal, containerHeight, containerWidth, top, left, width, height, offsetX, offsetY)
   }
 
   render() {
@@ -781,7 +746,7 @@ class PanZoom extends React.Component<Props, State> {
     } = this.props
     const { x, y, scale, rotate } = this.state
     const { a, b, c, d, x: transformX, y: transformY} = this.getTransformMatrix(x, y, scale, rotate)
-    const transform = this.getTransformMatrixString(a, b, c, d, transformX, transformY)
+    const transform = getTransformMatrixString(a, b, c, d, transformX, transformY)
 
     if (process.env.NODE_ENV !== 'production') {
       warning(

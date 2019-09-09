@@ -29,8 +29,7 @@ export const applyTransformMatrix = (angle, centerX, centerY, scale, offsetX, of
   ]
 }
 
-export const getTransformedElementCoordinates = (angle, scale, offsetX, offsetY) => (element: HTMLElement): TransformCoordinates => {
-  const { clientTop, clientLeft, clientWidth, clientHeight } = element
+export const getTransformedElementCoordinates = (angle, scale, offsetX, offsetY, clientTop, clientLeft, clientWidth, clientHeight): TransformCoordinates => {
   const centerX = clientWidth / 2
   const centerY = clientHeight / 2
 
@@ -59,4 +58,39 @@ export const getScaleMultiplier = (delta: number, zoomSpeed: number) => {
   }
 
   return scaleMultiplier
+}
+
+export const boundCoordinates = (
+  x: number, y: number,
+  boundaryRatioVertical: number, boundaryRatioHorizontal: number,
+  containerHeight: number, containerWidth: number,
+  top: number, left: number, width: number, height: number,
+  offsetX?: number = 0, offsetY?: number = 0) => {
+
+  // check that computed are inside boundaries otherwise set to the bounding box limits
+  let boundX = left
+  let boundY = top
+
+  if (boundY < -boundaryRatioVertical * height) {
+    boundY = -boundaryRatioVertical * height
+  }
+  else if (boundY > containerHeight - (1 - boundaryRatioVertical) * height) {
+    boundY = containerHeight - (1 - boundaryRatioVertical) * height
+  }
+
+  if (boundX < -boundaryRatioHorizontal * width) {
+    boundX = -boundaryRatioHorizontal * width
+  }
+  else if (boundX > containerWidth - (1 - boundaryRatioHorizontal) * width) {
+    boundX = containerWidth - (1 - boundaryRatioHorizontal) * width
+  }
+
+  // return new bounds coordinates for the transform matrix
+  // not the computed x/y coordinates
+  return {
+    boundX: x - (left - boundX),
+    boundY: y - (top - boundY),
+    offsetX: offsetX - (left - boundX),
+    offsetY: offsetY - (top - boundY),
+  }
 }
