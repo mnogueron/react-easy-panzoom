@@ -1,7 +1,7 @@
 // @flow
 import * as React from 'react'
 import warning from 'warning'
-import { TransformMatrix, getTransformedElementCoordinates, getScaleMultiplier, boundCoordinates } from './maths'
+import { TransformMatrix, getTransformedBoundingBox, getScaleMultiplier, boundCoordinates } from './maths'
 import { captureTextSelection, releaseTextSelection } from './events'
 
 type OnStateChangeData = {
@@ -707,9 +707,12 @@ class PanZoom extends React.Component<Props, State> {
 
     const { height: containerHeight, width: containerWidth } = this.getContainer().getBoundingClientRect()
     const { clientTop, clientLeft, clientWidth, clientHeight } = this.getDragContainer()
-    const { top, left, width, height } = getTransformedElementCoordinates(rotate, newScale, offsetX, offsetY, clientTop, clientLeft, clientWidth, clientHeight)
 
-    return boundCoordinates(x, y, boundaryRatioVertical, boundaryRatioHorizontal, containerHeight, containerWidth, top, left, width, height, offsetX, offsetY)
+    return boundCoordinates(x, y,
+      { vertical: boundaryRatioVertical, horizontal: boundaryRatioHorizontal },
+      getTransformedBoundingBox(rotate, newScale, offsetX, offsetY, { top: clientTop, left: clientLeft, width: clientWidth, height: clientHeight }),
+      containerHeight, containerWidth,
+      offsetX, offsetY)
   }
 
   render() {

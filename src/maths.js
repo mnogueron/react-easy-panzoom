@@ -1,4 +1,13 @@
-type TransformCoordinates = {
+type TransformationMatrix = {
+  a: number,
+  b: number,
+  c: number,
+  d: number,
+  x: number,
+  y: number,
+}
+
+type BoundingBox = {
   top: number,
   left: number,
   width: number,
@@ -10,7 +19,7 @@ type TransformCoordinates = {
 // ( a , c, x )
 // ( b , d, y )
 // ( 0 , 0, 1 )
-export const TransformMatrix = (angle, centerX, centerY, scale, offsetX, offsetY) => {
+export const TransformMatrix = (angle: number, centerX: number, centerY: number, scale: number, offsetX: number, offsetY: number): TransformationMatrix => {
   const theta = angle * Math.PI / 180
   const a = Math.cos(theta) * scale
   const b = Math.sin(theta) * scale
@@ -21,7 +30,7 @@ export const TransformMatrix = (angle, centerX, centerY, scale, offsetX, offsetY
   return { a, b, c, d, x : transformX + offsetX, y: transformY + offsetY }
 }
 
-export const applyTransformMatrix = (angle, centerX, centerY, scale, offsetX, offsetY) => (x, y) => {
+const applyTransformMatrix = (angle: number, centerX: number, centerY: number, scale: number, offsetX: number, offsetY: number) => (x, y): [number, number] => {
   const { a, b, c, d, x: transformX, y: transformY } = TransformMatrix(angle, centerX, centerY, scale, offsetX, offsetY)
   return [
     x * a + y * c + transformX,
@@ -29,16 +38,17 @@ export const applyTransformMatrix = (angle, centerX, centerY, scale, offsetX, of
   ]
 }
 
-export const getTransformedElementCoordinates = (angle, scale, offsetX, offsetY, clientTop, clientLeft, clientWidth, clientHeight): TransformCoordinates => {
-  const centerX = clientWidth / 2
-  const centerY = clientHeight / 2
+export const getTransformedBoundingBox = (angle: number, scale: number, offsetX: number, offsetY: number, boundingBox: BoundingBox): BoundingBox => {
+  const { top, left, width, height } = boundingBox
+  const centerX = width / 2
+  const centerY = height / 2
 
-  const _applyTransformMatrix = applyTransformMatrix(angle, centerX, centerY, scale, offsetX, offsetY)
+  const getTransformedCoordinates = applyTransformMatrix(angle, centerX, centerY, scale, offsetX, offsetY)
 
-  const [x1, y1] = _applyTransformMatrix(clientLeft, clientTop)
-  const [x2, y2] = _applyTransformMatrix(clientLeft + clientWidth, clientTop)
-  const [x3, y3] = _applyTransformMatrix(clientLeft + clientWidth, clientTop + clientHeight)
-  const [x4, y4] = _applyTransformMatrix(clientLeft, clientTop + clientHeight)
+  const [x1, y1] = getTransformedCoordinates(left, top)
+  const [x2, y2] = getTransformedCoordinates(left + width, top)
+  const [x3, y3] = getTransformedCoordinates(left + width, top + height)
+  const [x4, y4] = getTransformedCoordinates(left, top + height)
 
   return {
     top: Math.min(y1, y2, y3, y4),
@@ -48,7 +58,7 @@ export const getTransformedElementCoordinates = (angle, scale, offsetX, offsetY,
   }
 }
 
-export const getScaleMultiplier = (delta: number, zoomSpeed: number) => {
+export const getScaleMultiplier = (delta: number, zoomSpeed: number): number => {
   let speed = 0.065 * zoomSpeed
   let scaleMultiplier = 1
   if (delta > 0) { // zoom out
@@ -62,27 +72,31 @@ export const getScaleMultiplier = (delta: number, zoomSpeed: number) => {
 
 export const boundCoordinates = (
   x: number, y: number,
-  boundaryRatioVertical: number, boundaryRatioHorizontal: number,
+  boundaryRatio: {
+    vertical: number,
+    horizontal: number,
+  },
+  elementMeasurement: BoundingBox,
   containerHeight: number, containerWidth: number,
-  top: number, left: number, width: number, height: number,
   offsetX?: number = 0, offsetY?: number = 0) => {
 
+  const { top, left, width, height } = elementMeasurement
   // check that computed are inside boundaries otherwise set to the bounding box limits
   let boundX = left
   let boundY = top
 
-  if (boundY < -boundaryRatioVertical * height) {
-    boundY = -boundaryRatioVertical * height
+  if (boundY < -boundaryRatio.vertical * height) {
+    boundY = -boundaryRatio.vertical * height
   }
-  else if (boundY > containerHeight - (1 - boundaryRatioVertical) * height) {
-    boundY = containerHeight - (1 - boundaryRatioVertical) * height
+  else if (boundY > containerHeight - (1 - boundaryRatio.vertical) * height) {
+    boundY = containerHeight - (1 - boundaryRatio.vertical) * height
   }
 
-  if (boundX < -boundaryRatioHorizontal * width) {
-    boundX = -boundaryRatioHorizontal * width
+  if (boundX < -boundaryRatio.horizontal * width) {
+    boundX = -boundaryRatio.horizontal * width
   }
-  else if (boundX > containerWidth - (1 - boundaryRatioHorizontal) * width) {
-    boundX = containerWidth - (1 - boundaryRatioHorizontal) * width
+  else if (boundX > containerWidth - (1 - boundaryRatio.horizontal) * width) {
+    boundX = containerWidth - (1 - boundaryRatio.horizontal) * width
   }
 
   // return new bounds coordinates for the transform matrix
