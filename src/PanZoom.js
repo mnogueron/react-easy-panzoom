@@ -1,7 +1,7 @@
 // @flow
 import * as React from 'react'
 import warning from 'warning'
-import { TransformMatrix, applyTransformMatrix } from './utils'
+import { TransformMatrix, getTransformedElementCoordinates, preventDefault } from './utils'
 
 type OnStateChangeData = {
   x: number,
@@ -39,37 +39,6 @@ type State = {
   y: number,
   scale: number,
   rotate: number
-}
-
-type TransformCoordinates = {
-  top: number,
-  left: number,
-  width: number,
-  height: number,
-}
-
-const getTransformedElementCoordinates = (angle, scale, offsetX, offsetY) => (element: HTMLElement): TransformCoordinates => {
-  const { clientTop, clientLeft, clientWidth, clientHeight } = element
-  const centerX = clientWidth / 2
-  const centerY = clientHeight / 2
-
-  const _applyTransformMatrix = applyTransformMatrix(angle, centerX, centerY, scale, offsetX, offsetY)
-
-  const [x1, y1] = _applyTransformMatrix(clientLeft, clientTop)
-  const [x2, y2] = _applyTransformMatrix(clientLeft + clientWidth, clientTop)
-  const [x3, y3] = _applyTransformMatrix(clientLeft + clientWidth, clientTop + clientHeight)
-  const [x4, y4] = _applyTransformMatrix(clientLeft, clientTop + clientHeight)
-
-  return {
-    top: Math.min(y1, y2, y3, y4),
-    left: Math.min(x1, x2, x3, x4),
-    width: Math.max(x1, x2, x3, x4) - Math.min(x1, x2, x3, x4),
-    height: Math.max(y1, y2, y3, y4) - Math.min(y1, y2, y3, y4),
-  }
-}
-
-const preventDefault = (e) => {
-  e.preventDefault()
 }
 
 class PanZoom extends React.Component<Props, State> {
