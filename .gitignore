@@ -8,3 +8,4 @@ dist
 lib
 build
 build-storybook
+coverage

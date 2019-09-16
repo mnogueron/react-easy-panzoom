@@ -19,6 +19,7 @@
     "storybook:publish": "gh-pages -m 'Update storybook gh-pages' -d ./build-storybook",
     "build": "webpack",
     "test": "jest",
+    "coverage": "jest --coverage",
     "flow": "flow",
     "build:cjs": "cross-env NODE_ENV=production babel --config-file ./babel.config.js ./src --out-dir ./lib --ignore \"**/*.test.js\"",
     "postpublish": "npm run storybook:build && npm run storybook:publish"
@@ -58,7 +59,10 @@
     "@storybook/react": "^5.1.11",
     "@storybook/theming": "^5.1.11",
     "babel-loader": "^8.0.5",
+    "babel-polyfill": "^6.26.0",
     "cross-env": "^5.2.0",
+    "enzyme": "^3.10.0",
+    "enzyme-adapter-react-16": "^1.14.0",
     "flow-bin": "^0.95.1",
     "gh-pages": "2.0.1",
     "jest": "^24.8.0",
