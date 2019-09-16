@@ -1,5 +1,4 @@
 export const preventDefault = (e) => {
-  console.log('preventDefault')
   e.preventDefault()
 }
 
