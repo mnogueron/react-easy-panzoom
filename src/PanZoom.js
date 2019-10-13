@@ -666,8 +666,12 @@ class PanZoom extends React.Component<Props, State> {
     this.setState({ x: 0, y: 0, scale: 1, angle: 0 })
   }
 
+  getContainerBoundingRect = (): ClientRect => {
+    return this.getContainer().getBoundingClientRect()
+  }
+
   getOffset = (e: MouseEvent | Touch): Coordinates => {
-    const containerRect = this.getContainer().getBoundingClientRect()
+    const containerRect = this.getContainerBoundingRect()
     const offsetX = e.clientX - containerRect.left
     const offsetY = e.clientY - containerRect.top
     return { x: offsetX, y: offsetY }
@@ -711,7 +715,7 @@ class PanZoom extends React.Component<Props, State> {
       }
     }
 
-    const { height: containerHeight, width: containerWidth } = this.getContainer().getBoundingClientRect()
+    const { height: containerHeight, width: containerWidth } = this.getContainerBoundingRect()
     const { clientTop, clientLeft, clientWidth, clientHeight } = this.getDragContainer()
     const clientBoundingBox = { top: clientTop, left: clientLeft, width: clientWidth, height: clientHeight }
 
