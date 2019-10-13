@@ -1,10 +1,6 @@
 import React from 'react'
 import { mount } from 'enzyme'
 
-const events = require('./events')
-const spy = jest.spyOn(events, 'preventDefault')
-console.log(events)
-
 const PanZoom = require('./PanZoom').default
 
 const PANZOOM_WIDTH = 500
@@ -104,6 +100,8 @@ describe('Interactions and transformations', () => {
     document.dispatchEvent(new TouchEvent('touchend', { touches: [] }))
     expect(wrapper.state()).toStrictEqual({ x: 6, y: 8, angle: 0, scale: 1 })
   })
+
+  test.todo('should capture and release text selection')
 
   /*test('should capture and release text selection', async () => {
     const wrapper = mount(<PanZoom style={style}>{children}</PanZoom>)
