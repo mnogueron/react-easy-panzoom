@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react'
+import React, { useRef } from 'react'
 
 import { storiesOf } from '@storybook/react'
 import { withKnobs, boolean, number } from '@storybook/addon-knobs';
@@ -226,17 +226,15 @@ storiesOf('react-easy-panzoom', module)
   ))
   .add('onStateChange handler', () => {
     return (
-      <>
-        <DefaultPanZoom
-          onStateChange={(data) => {
-           console.log(data)
-          }}     
-        >
-          <Box>
-            Open the console then move me
-          </Box>
-        </DefaultPanZoom>
-      </>
+      <DefaultPanZoom
+        onStateChange={(data) => {
+         console.log(data)
+        }}
+      >
+        <Box>
+          Open the console then move me
+        </Box>
+      </DefaultPanZoom>
     )
   })
   .add('autoCenter animate option', () => <AutoCenterDemo animate={boolean('Animate auto center', true)} />)
