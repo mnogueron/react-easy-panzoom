@@ -21,8 +21,7 @@
     "test": "jest",
     "coverage": "jest --coverage",
     "flow": "flow",
-    "build:cjs": "cross-env NODE_ENV=production babel --config-file ./babel.config.js ./src --out-dir ./lib --ignore \"**/*.test.js\"",
-    "postpublish": "npm run storybook:build && npm run storybook:publish"
+    "build:cjs": "cross-env NODE_ENV=production babel --config-file ./babel.config.js ./src --out-dir ./lib --ignore \"**/*.test.js\""
   },
   "files": [
     "*.md",
