@@ -16,6 +16,7 @@ type Props = {
   zoomSpeed: number,
   doubleZoomSpeed: number,
   disabled?: boolean,
+  cursor?: string,
   autoCenter?: boolean,
   autoCenterZoomLevel?: number,
   disableKeyInteraction?: boolean,
@@ -53,6 +54,7 @@ class PanZoom extends React.Component<Props, State> {
     zoomSpeed: 1,
     doubleZoomSpeed: 1.75,
     disabled: false,
+    cursor: 'default',
     minZoom: 0,
     maxZoom: Infinity,
     noStateUpdate: true,
@@ -756,6 +758,7 @@ class PanZoom extends React.Component<Props, State> {
       onKeyUp,
       onTouchStart,
       onStateChange,
+      cursor,
       ...restPassThroughProps
     } = this.props
     const { x, y, scale, angle } = this.state
@@ -809,7 +812,7 @@ class PanZoom extends React.Component<Props, State> {
         onKeyDown={this.onKeyDown}
         onKeyUp={this.onKeyUp}
         onTouchStart={this.onTouchStart}
-        style={{ cursor: disabled ? 'initial' : 'pointer', ...style }}
+        style={{ cursor: disabled ? 'initial' : cursor, ...style }}
         {...restPassThroughProps}
       >
         <div
