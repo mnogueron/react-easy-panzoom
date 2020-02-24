@@ -662,6 +662,10 @@ class PanZoom extends React.Component<Props, State> {
     this.centeredZoom(1, zoomSpeed)
   }
 
+  setScale = (scale?: number = 1) => {
+    this.setState({scale})
+  }
+
   reset = () => {
     this.setState({ x: 0, y: 0, scale: 1, angle: 0 })
   }

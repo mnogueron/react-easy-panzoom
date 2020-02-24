@@ -3,6 +3,7 @@ import React, { useRef } from 'react'
 import { storiesOf } from '@storybook/react'
 import { withKnobs, boolean, number } from '@storybook/addon-knobs';
 import ZoomControllerUI from './ControllerUI/ZoomControllerUI'
+import ScaleControllerUI from './ControllerUI/ScaleControllerUI'
 import PadControllerUI from './ControllerUI/PadControllerUI'
 import ResetControllerUI from './ControllerUI/ResetControllerUI'
 import RotationControllerUI from './ControllerUI/RotationControllerUI'
@@ -68,6 +69,10 @@ const PanZoomControlUI = (props) => {
     panZoom.current && panZoom.current.zoomOut(zoomOutSpeed)
   }
 
+  function onSetScale(scale) {
+    panZoom.current && panZoom.current.setScale(scale)
+  }
+
   function moveByRatio(x, y) {
     panZoom.current && panZoom.current.moveByRatio(x, y)
   }
@@ -105,6 +110,11 @@ const PanZoomControlUI = (props) => {
         <ZoomControllerUI
           onZoomIn={onZoomIn}
           onZoomOut={onZoomOut}
+        />
+      </div>
+      <div style={{ position: 'absolute', left: 50, top: 8, zIndex: 1 }}>
+        <ScaleControllerUI 
+          onSetScale={onSetScale}
         />
       </div>
 
