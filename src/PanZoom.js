@@ -799,6 +799,7 @@ class PanZoom extends React.Component<Props, State> {
         }
         onDoubleClick={this.onDoubleClick}
         onMouseDown={this.onMouseDown}
+        className={this.props.className}
         // React onWheel event listener is broken on Chrome 73
         // The default options for the wheel event listener has been defaulted to passive
         // but this behaviour breaks the zoom feature of PanZoom.
