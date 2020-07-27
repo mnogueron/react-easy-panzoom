@@ -84,12 +84,11 @@ export const getTransformedBoundingBox = (transformationParameters: Transformati
 }
 
 export const getScaleMultiplier = (delta: number, zoomSpeed: number = 1): number => {
-  let speed = ZOOM_SPEED_MULTIPLIER * zoomSpeed
   let scaleMultiplier = 1
   if (delta > 0) { // zoom out
-    scaleMultiplier = (1 - speed)
+    scaleMultiplier = (1 - (zoomSpeed * ZOOM_SPEED_MULTIPLIER))
   } else if (delta < 0) { // zoom in
-    scaleMultiplier = (1 + speed)
+    scaleMultiplier = (zoomSpeed / (1 - ZOOM_SPEED_MULTIPLIER))
   }
 
   return scaleMultiplier
