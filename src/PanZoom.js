@@ -297,10 +297,10 @@ class PanZoom extends React.Component<Props, State> {
   }
 
   onKeyUp = (e: SyntheticKeyboardEvent<HTMLDivElement>) => {
-    const { disableKeyInteraction, onKeyDown } = this.props
+    const { disableKeyInteraction, onKeyUp } = this.props
 
-    if (typeof onKeyDown === 'function') {
-        onKeyDown(e)
+    if (typeof onKeyUp === 'function') {
+        onKeyUp(e)
     }
 
     if (disableKeyInteraction) {
