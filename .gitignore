@@ -5,7 +5,6 @@
 node_modules
 package-lock.json
 dist
-lib
 build
 build-storybook
 coverage
