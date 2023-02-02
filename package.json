@@ -72,5 +72,8 @@
     "webpack": "^4.29.6",
     "webpack-cli": "^3.3.0",
     "webpack-node-externals": "^1.7.2"
+  },
+  "resolutions": {
+    "**/**/fsevents": "^1.2.9"
   }
 }
