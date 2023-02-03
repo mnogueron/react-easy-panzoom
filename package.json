@@ -1,6 +1,6 @@
 {
   "name": "react-easy-panzoom",
-  "version": "0.4.4",
+  "version": "0.5.0",
   "description": "Wrapper to enable pan and zoom for any React component",
   "main": "./lib/index.js",
   "author": "mnogueron",
