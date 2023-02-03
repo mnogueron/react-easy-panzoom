@@ -5,6 +5,8 @@ import type { Coordinates, BoundCoordinates, TransformationParameters, Transform
 import { TransformMatrix, getTransformedBoundingBox, getScaleMultiplier, boundCoordinates } from './maths'
 import { captureTextSelection, releaseTextSelection } from './events'
 
+const defaultNormalizeConfig = require('./config')
+
 type OnStateChangeData = {
   x: number,
   y: number,
@@ -29,6 +31,8 @@ type Props = {
   noStateUpdate: boolean,
   boundaryRatioVertical: number,
   boundaryRatioHorizontal: number,
+  hasNaturalScroll?: boolean,
+  normalizeConfig?: object,
 
   onPanStart?: (any) => void,
   onPan?: (any) => void,
@@ -48,6 +52,46 @@ const getTransformMatrixString = (transformationMatrix: TransformationMatrix) =>
   return `matrix(${a}, ${b}, ${c}, ${d}, ${x}, ${y})`
 }
 
+function clampValue(value, minAount) {
+  return Math.sign(value) * Math.min(minAount, Math.abs(value))
+}
+
+function normalizeWheelEvent(event, hasNaturalScroll, config) {
+  // Notes:
+  // * Inspired by: https://danburzo.ro/dom-gestures/#unify-wheel-touch-gesture
+  // * Trackpad gestures for Pan and Pinch are encoded as an WheelEvent
+  // * The mouse scroll wheel will also create WheelEvents
+  // * We need a way to handle both trackpad and mousewheel events for Pan gestures
+  // * We need to detect when a Pinch gesture happens and treat has distinct from a normal Pan
+
+  const {
+    deltaLineMulti,
+    deltaPageMulti,
+    deltaPixelClamp,
+    deltaPixelClampX,
+    deltaPixelClampY,
+  } = config
+  
+  let dx = event.deltaX
+  let dy = event.deltaY
+
+  // Handle horizontal scrolling with mouse wheel
+  if (dx === 0 && event.shiftKey) {
+    [dx, dy] = [clampValue(dy, deltaPixelClampX), dx]
+  }
+
+  if (event.deltaMode === WheelEvent.DOM_DELTA_LINE) {
+    dx *= deltaLineMulti
+    dy *= deltaLineMulti
+  } else if (event.deltaMode === WheelEvent.DOM_DELTA_PAGE) {
+    dx *= deltaPageMulti
+    dy *= deltaPageMulti
+  }
+
+  const direction = hasNaturalScroll ? -1 : 1
+  return [dx, clampValue(dy, deltaPixelClampY)].map(delta => delta * direction)
+}
+
 class PanZoom extends React.Component<Props, State> {
   static defaultProps = {
     zoomSpeed: 1,
@@ -60,6 +104,8 @@ class PanZoom extends React.Component<Props, State> {
     boundaryRatioHorizontal: 0.8,
     disableDoubleClickZoom: false,
     disableScrollZoom: false,
+    hasNaturalScroll: true,
+    normalizeConfig: defaultNormalizeConfig,
     preventPan: () => false,
   }
 
@@ -94,8 +140,21 @@ class PanZoom extends React.Component<Props, State> {
     angle: 0,
   }
 
+  wheelTimer = null
+  wheelPanning = false
+  ctrlKeyPressed = false
+  normalizeConfig = defaultNormalizeConfig
+
+  clearWheelTimer = () => {
+    if (this.wheelTimer) {
+      clearTimeout(this.wheelTimer)
+    }
+  }
+
   componentDidMount(): void {
-    const { autoCenter, autoCenterZoomLevel, minZoom, maxZoom } = this.props
+    const { autoCenter, autoCenterZoomLevel, minZoom, maxZoom, normalizeConfig } = this.props
+
+    this.normalizeConfig = Object.assign({}, defaultNormalizeConfig, normalizeConfig)
 
     if (this.container.current) {
       this.container.current.addEventListener('wheel', this.onWheel, { passive: false })
@@ -155,7 +214,7 @@ class PanZoom extends React.Component<Props, State> {
   }
 
   onMouseDown = (e: MouseEvent) => {
-    const { preventPan, onMouseDown } = this.props
+    const { preventPan, onMouseDown, noStateUpdate } = this.props
 
     if (typeof onMouseDown === 'function') {
       onMouseDown(e)
@@ -170,6 +229,17 @@ class PanZoom extends React.Component<Props, State> {
     if (this.touchInProgress) {
       e.stopPropagation()
       return false
+    }
+
+    if (this.wheelPanning) {
+      this.clearWheelTimer()
+      this.wheelPanning = false
+      if (noStateUpdate) {
+        this.setState(({ x: this.prevPanPosition.x, y: this.prevPanPosition.y }), () => {
+          this.onMouseDown(e)
+        })
+      }
+      return
     }
 
     const isLeftButton = ((e.button === 1 && window.event !== null) || e.button === 0)
@@ -240,15 +310,52 @@ class PanZoom extends React.Component<Props, State> {
   }
 
   onWheel = (e: WheelEvent) => {
-    const { disableScrollZoom, disabled, zoomSpeed } = this.props
-    if (disableScrollZoom || disabled) {
-      return
-    }
+    const { disableScrollZoom, disabled, zoomSpeed, noStateUpdate, hasNaturalScroll } = this.props
 
-    const scale = getScaleMultiplier(e.deltaY, zoomSpeed)
-    const offset = this.getOffset(e)
-    this.zoomTo(offset.x, offset.y, scale)
-    e.preventDefault()
+    if (disabled) return
+
+    if (!disableScrollZoom && this.ctrlKeyPressed) {
+      const scale = getScaleMultiplier(e.deltaY, zoomSpeed)
+      const offset = this.getOffset(e)
+      this.zoomTo(offset.x, offset.y, scale)
+      e.preventDefault()
+    } else {
+      if (e.cancelable) {
+        e.preventDefault()
+      }
+
+      const [dx, dy] = normalizeWheelEvent(e, hasNaturalScroll, this.normalizeConfig)
+
+      if (!this.wheelPanning) {
+        this.prevPanPosition = {
+          x: this.state.x,
+          y: this.state.y,
+        }
+
+        this.wheelPanning = true
+      } else {
+        this.triggerOnPanStart(e)
+
+        const isPinchGesture = e.ctrlKey
+        if (!isPinchGesture) {
+          this.moveBy(dx, dy, noStateUpdate)
+          this.triggerOnPan(e)
+        }
+        
+        this.clearWheelTimer()
+        this.wheelTimer = window.setTimeout(() => {
+          if (this.wheelPanning) {
+            if (noStateUpdate) {
+              this.setState(({ x: this.prevPanPosition.x, y: this.prevPanPosition.y }))
+            }
+
+            this.triggerOnPanEnd(e)
+            this.wheelPanning = false
+          }
+        }, this.normalizeConfig.wheelTimerTimeout)
+      }
+
+    }
   }
 
   onKeyDown = (e: SyntheticKeyboardEvent<HTMLDivElement>) => {
@@ -293,6 +400,8 @@ class PanZoom extends React.Component<Props, State> {
       if (z) {
         this.centeredZoom(z)
       }
+    } else if (e.key === "Control") {
+      this.ctrlKeyPressed = true;
     }
   }
 
@@ -305,6 +414,10 @@ class PanZoom extends React.Component<Props, State> {
 
     if (disableKeyInteraction) {
       return
+    }
+
+    if (e.key === "Control") {
+      this.ctrlKeyPressed = false
     }
 
     if (this.prevPanPosition && (this.prevPanPosition.x !== this.state.x || this.prevPanPosition.y !== this.state.y)) {
@@ -320,6 +433,11 @@ class PanZoom extends React.Component<Props, State> {
     
     if (disabled) {
       return
+    }
+
+    if (this.wheelPanning) {
+      this.clearWheelTimer()
+      this.wheelPanning = false
     }
 
     if (e.touches.length === 1) {
@@ -756,6 +874,8 @@ class PanZoom extends React.Component<Props, State> {
       onKeyUp,
       onTouchStart,
       onStateChange,
+      hasNaturalScroll,
+      normalizeConfig,
       ...restPassThroughProps
     } = this.props
     const { x, y, scale, angle } = this.state
