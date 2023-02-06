@@ -142,7 +142,11 @@ class PanZoom extends React.Component<Props, State> {
 
   wheelTimer = null
   wheelPanning = false
+  wheelZooming = false
   ctrlKeyPressed = false
+  ctrlKeyWasPressed = false
+  prevPanEventTimeStamp = null
+  prevZoomEventTimeStamp = null
   normalizeConfig = defaultNormalizeConfig
 
   clearWheelTimer = () => {
@@ -309,53 +313,107 @@ class PanZoom extends React.Component<Props, State> {
     releaseTextSelection()
   }
 
+  resetWheelPanState = (e) => {
+    const { noStateUpdate } = this.props
+    if (noStateUpdate) {
+      this.setState(({ x: this.prevPanPosition.x, y: this.prevPanPosition.y }))
+    }
+
+    this.triggerOnPanEnd(e)
+    this.wheelPanning = false
+  }
+
+  resetWheelZoomState = (e) => {
+    this.wheelZooming = false
+    this.ctrlKeyWasPressed = false
+  }
+
   onWheel = (e: WheelEvent) => {
     const { disableScrollZoom, disabled, zoomSpeed, noStateUpdate, hasNaturalScroll } = this.props
+    const wheelZoomSpeed = Math.min(this.normalizeConfig.wheelMaxZoomSpeed, zoomSpeed)
+
+    const normalizedEvent = normalizeWheelEvent(e, hasNaturalScroll, this.normalizeConfig)
+    const [dx, dy] = normalizedEvent
+
+    const isPinchGesture = e.ctrlKey && !Number.isInteger(dy)
+    const isWithinScrollable = getComputedStyle(e.target).getPropertyValue("--scrollable")
+
+    this.ctrlKeyPressed = e.ctrlKey
 
     if (disabled) return
+    if (!this.ctrlKeyPressed && !this.wheelPanning && isWithinScrollable) return
 
-    if (!disableScrollZoom && this.ctrlKeyPressed) {
-      const scale = getScaleMultiplier(e.deltaY, zoomSpeed)
-      const offset = this.getOffset(e)
-      this.zoomTo(offset.x, offset.y, scale)
-      e.preventDefault()
-    } else {
+    if (this.ctrlKeyPressed) {
+      this.prevZoomEventTimeStamp = e.timeStamp
+    }
+
+    if (!this.ctrlKeyPressed && this.wheelPanning) {
+      this.prevPanEventTimeStamp = e.timeStamp
+    }
+
+    if (!this.ctrlKeyPressed && this.prevZoomEventTimeStamp) {
+      const diffTime = Math.abs(e.timeStamp - this.prevZoomEventTimeStamp)
+      if (diffTime >= this.normalizeConfig.wheelPanZoomSwapTimeout) {
+        this.resetWheelZoomState(e)
+        this.prevZoomEventTimeStamp = null
+      }
+    }
+
+    if (this.ctrlKeyPressed && this.prevPanEventTimeStamp) {
+      const diffTime = Math.abs(e.timeStamp - this.prevPanEventTimeStamp)
+      if (diffTime >= this.normalizeConfig.wheelPanZoomSwapTimeout) {
+        this.resetWheelPanState(e)
+        this.prevPanEventTimeStamp = null
+      }
+    }
+
+    if (!disableScrollZoom && this.ctrlKeyPressed && !this.wheelPanning) {
       if (e.cancelable) {
         e.preventDefault()
       }
 
-      const [dx, dy] = normalizeWheelEvent(e, hasNaturalScroll, this.normalizeConfig)
+      if (!this.wheelZooming) {
+        this.wheelZooming = true
+      }
+
+      if (!this.ctrlKeyWasPressed) {
+        this.ctrlKeyWasPressed = true
+      }
+
+      const scale = getScaleMultiplier(e.deltaY, wheelZoomSpeed)
+      const offset = this.getOffset(e)
+      this.zoomTo(offset.x, offset.y, scale)
+    }
+
+    if (!this.ctrlKeyPressed && !this.ctrlKeyWasPressed) {
+      if (e.cancelable) {
+        e.preventDefault()
+      }
 
       if (!this.wheelPanning) {
+        this.wheelPanning = true
+
         this.prevPanPosition = {
           x: this.state.x,
           y: this.state.y,
         }
-
-        this.wheelPanning = true
       } else {
         this.triggerOnPanStart(e)
+        this.moveBy(dx, dy, noStateUpdate)
+        this.triggerOnPan(e)
+      }
+    }
 
-        const isPinchGesture = e.ctrlKey
-        if (!isPinchGesture) {
-          this.moveBy(dx, dy, noStateUpdate)
-          this.triggerOnPan(e)
-        }
-        
-        this.clearWheelTimer()
-        this.wheelTimer = window.setTimeout(() => {
-          if (this.wheelPanning) {
-            if (noStateUpdate) {
-              this.setState(({ x: this.prevPanPosition.x, y: this.prevPanPosition.y }))
-            }
-
-            this.triggerOnPanEnd(e)
-            this.wheelPanning = false
-          }
-        }, this.normalizeConfig.wheelTimerTimeout)
+    this.clearWheelTimer()
+    this.wheelTimer = window.setTimeout(() => {
+      if (this.wheelPanning) {
+        this.resetWheelPanState(e)
       }
 
-    }
+      if (!this.ctrlKeyPressed) {
+        this.resetWheelZoomState(e)
+      }
+    }, this.normalizeConfig.wheelTimerTimeout)
   }
 
   onKeyDown = (e: SyntheticKeyboardEvent<HTMLDivElement>) => {
@@ -400,8 +458,6 @@ class PanZoom extends React.Component<Props, State> {
       if (z) {
         this.centeredZoom(z)
       }
-    } else if (e.key === "Control") {
-      this.ctrlKeyPressed = true;
     }
   }
 
@@ -414,10 +470,6 @@ class PanZoom extends React.Component<Props, State> {
 
     if (disableKeyInteraction) {
       return
-    }
-
-    if (e.key === "Control") {
-      this.ctrlKeyPressed = false
     }
 
     if (this.prevPanPosition && (this.prevPanPosition.x !== this.state.x || this.prevPanPosition.y !== this.state.y)) {
@@ -438,6 +490,13 @@ class PanZoom extends React.Component<Props, State> {
     if (this.wheelPanning) {
       this.clearWheelTimer()
       this.wheelPanning = false
+    }
+
+    if (this.wheelZooming) {
+      this.clearWheelTimer()
+      this.wheelZooming = false
+      this.ctrlKeyPressed = false
+      this.ctrlKeyWasPressed = false
     }
 
     if (e.touches.length === 1) {

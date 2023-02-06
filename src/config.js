@@ -4,5 +4,7 @@ module.exports = {
     deltaPixelClamp: 15,
     deltaPixelClampX: 15,
     deltaPixelClampY: 24,
+    wheelMaxZoomSpeed: 2,
     wheelTimerTimeout: 500,
+    wheelPanZoomSwapTimeout: 250,
 }
