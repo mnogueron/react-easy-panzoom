@@ -52,8 +52,8 @@ const getTransformMatrixString = (transformationMatrix: TransformationMatrix) =>
   return `matrix(${a}, ${b}, ${c}, ${d}, ${x}, ${y})`
 }
 
-function clampValue(value, minAount) {
-  return Math.sign(value) * Math.min(minAount, Math.abs(value))
+function clampValue(value, minAmount) {
+  return Math.sign(value) * Math.min(minAmount, Math.abs(value))
 }
 
 function normalizeWheelEvent(event, hasNaturalScroll, config) {
