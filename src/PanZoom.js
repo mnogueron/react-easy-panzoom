@@ -978,43 +978,45 @@ export class PanZoom extends React.Component /* React.Component<Props,State> */ 
       )
     }
 
-    return (
-      <div
-        ref={this.container}
-        {
-          ...(disableKeyInteraction ? {} : {
-            tabIndex: 0, // enable onKeyDown event
-          })
-        }
-        onDoubleClick={this.onDoubleClick}
-        onMouseDown={this.onMouseDown}
+    return React.createElement(
+      'div',
+      Object.assign({
+        ref: this.container,
+        onDoubleClick: this.onDoubleClick,
+        onMouseDown: this.onMouseDown,
+
         // React onWheel event listener is broken on Chrome 73
         // The default options for the wheel event listener has been defaulted to passive
         // but this behaviour breaks the zoom feature of PanZoom.
         // Until further research onWheel listener is replaced by
         // this.container.addEventListener('mousewheel', this.onWheel, { passive: false })
         // see Chrome motivations https://developers.google.com/web/updates/2019/02/scrolling-intervention
-        //onWheel={this.onWheel}
-        onKeyDown={this.onKeyDown}
-        onKeyUp={this.onKeyUp}
-        onTouchStart={this.onTouchStart}
-        style={{ cursor: disabled ? 'initial' : 'pointer', ...style }}
-        {...restPassThroughProps}
-      >
-        <div
-          ref={this.dragContainer}
-          style={{
+        // onWheel: this.onWheel
+
+        onKeyDown: this.onKeyDown,
+        onKeyUp: this.onKeyUp,
+        onTouchStart: this.onTouchStart,
+        style: {
+          cursor: disabled ? 'initial' : 'pointer',
+          ...style
+        },
+      },
+      disableKeyInteraction ? {} : { tabIndex: 0 },
+      restPassThroughProps),
+
+      React.createElement(
+        'div',
+        {
+          ref: this.dragContainer,
+          style: {
             display: 'inline-block',
             transformOrigin: '0 0 0',
             transform,
             transition: 'all 0.10s linear',
             willChange: 'transform',
-          }}
-        >
-          {children}
-        </div>
-      </div>
-    )
+          }
+        },
+        children))
   }
 }
 
