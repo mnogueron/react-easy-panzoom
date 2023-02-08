@@ -102,8 +102,15 @@ function normalizeWheelEvent(event, hasNaturalScroll, config) {
   return [dx, clampValue(dy, deltaPixelClampY)].map(delta => delta * direction)
 }
 
+function normalizeSign(num) {
+  if (Object.is(0, num)) return 0
+  if (Object.is(-0, num)) return 0
+  return Math.sign(num)
+}
+
 function isSimilar1DComponent(d1, d2) {
-  return Object.is(d1, d2) || Object.is(Math.sign(d1), Math.sign(d2) || (Object.is(0, d1) && Object.is(2, Math.abs(d2))))
+  return Object.is(d1, d2)
+    || Object.is(normalizeSign(d1), normalizeSign(d2))
 }
 
 function isSimilar2DVector(prevDirection, nextDirection) {
@@ -350,36 +357,28 @@ export class PanZoom extends React.Component /* React.Component<Props,State> */ 
   }
 
   onWheel = (e /*: WheelEvent */) => {
-    const { disableScrollZoom, disabled, zoomSpeed, noStateUpdate, hasNaturalScroll } = this.props
-    const wheelZoomSpeed = Math.min(this.normalizeConfig.wheelMaxZoomSpeed, zoomSpeed)
+    const {
+      disableScrollZoom,
+      disabled,
+      zoomSpeed,
+      noStateUpdate,
+      hasNaturalScroll,
+    } = this.props
 
+    if (disabled) return
+
+    const {
+      wheelMaxZoomSpeed
+    } = this.normalizeConfig
+
+    const wheelZoomSpeed = Math.min(wheelMaxZoomSpeed, zoomSpeed)
     const normalizedEvent = normalizeWheelEvent(e, hasNaturalScroll, this.normalizeConfig)
     const [dx, dy] = normalizedEvent
 
-    const isPinchGesture = e.ctrlKey && !Number.isInteger(dy)
-    const isWithinScrollable = getComputedStyle(e.target).getPropertyValue("--scrollable")
-    const isHorizontalPan = (Object.is(0, dy) && !Object.is(0, dx))
-
     this.ctrlKeyPressed = e.ctrlKey
-
-    if (disabled) return
-    if (!this.ctrlKeyPressed
-      && !this.wheelPanning
-      && isWithinScrollable
-      && !isHorizontalPan) {
-      this.wheelContainerScrolling = true
-      this.prevScrollEventTimeStamp = e.timeStamp
-      this.prevNormalizedEvent = normalizedEvent
-      return
-    }
-
-    if (this.ctrlKeyPressed) {
-      this.prevZoomEventTimeStamp = e.timeStamp
-    }
-
-    if (!this.ctrlKeyPressed && this.wheelPanning) {
-      this.prevPanEventTimeStamp = e.timeStamp
-    }
+    const isPinchGesture = this.ctrlKeyPressed && !Number.isInteger(dy)
+    const isWithinScrollable = getComputedStyle(e.target).getPropertyValue("--scrollable")
+    const isHorizontalPan = (Object.is(0, dy) || Object.is(-0, dy)) && !Object.is(0, dx) 
 
     if (!this.ctrlKeyPressed && this.prevZoomEventTimeStamp) {
       const diffTime = Math.abs(e.timeStamp - this.prevZoomEventTimeStamp)
@@ -387,6 +386,15 @@ export class PanZoom extends React.Component /* React.Component<Props,State> */ 
       if (diffTime >= this.normalizeConfig.wheelPanZoomSwapTimeout && !isSimilarDirection) {
         this.resetWheelZoomState(e)
         this.prevZoomEventTimeStamp = null
+
+        if (isWithinScrollable) {
+          e.preventDefault()
+
+          if (!isHorizontalPan) {
+            this.wheelContainerScrolling = true
+            this.prevScrollEventTimeStamp = e.timeStamp
+          }
+        }
       }
     }
 
@@ -401,10 +409,18 @@ export class PanZoom extends React.Component /* React.Component<Props,State> */ 
 
     if (this.prevScrollEventTimeStamp) {
       const diffTime = Math.abs(e.timeStamp - this.prevScrollEventTimeStamp)
-      const isSameDirection = isSimilar2DVector(this.prevNormalizedEvent, normalizedEvent)
-      if (diffTime >= this.normalizeConfig.wheelPanZoomSwapTimeout && !isSameDirection) {
+      const isSimilarDirection = isSimilar2DVector(this.prevNormalizedEvent, normalizedEvent)
+      const isTimedOut = diffTime >= this.normalizeConfig.wheelPanZoomSwapTimeout
+      const isTryingPan = (isHorizontalPan || !isWithinScrollable) && e.cancelable
+      if ((isTimedOut && (!isSimilarDirection || isTryingPan))) {
         this.wheelContainerScrolling = false
         this.prevScrollEventTimeStamp = null
+      }
+    }
+
+    if (!disableScrollZoom && this.wheelZooming && !this.wheelPanning && !this.wheelContainerScrolling && isWithinScrollable) {
+      if (e.cancelable) {
+        e.preventDefault()
       }
     }
 
@@ -413,13 +429,21 @@ export class PanZoom extends React.Component /* React.Component<Props,State> */ 
         e.preventDefault()
       }
 
-      if (!this.wheelZooming) {
-        this.wheelZooming = true
-      }
+      this.wheelZooming = true
+      this.prevZoomEventTimeStamp = e.timeStamp
 
       const scale = getScaleMultiplier(e.deltaY, wheelZoomSpeed)
       const offset = this.getOffset(e)
       this.zoomTo(offset.x, offset.y, scale)
+    }
+
+    if (!this.ctrlKeyPressed
+      && !this.wheelZooming
+      && !this.wheelPanning
+      && isWithinScrollable
+      && !isHorizontalPan) {
+      this.wheelContainerScrolling = true
+      this.prevScrollEventTimeStamp = e.timeStamp
     }
 
     if (!this.wheelZooming && !this.wheelContainerScrolling) {
@@ -435,6 +459,7 @@ export class PanZoom extends React.Component /* React.Component<Props,State> */ 
           y: this.state.y,
         }
       } else {
+        this.prevPanEventTimeStamp = e.timeStamp
         this.triggerOnPanStart(e)
         this.moveBy(dx, dy, noStateUpdate)
         this.triggerOnPan(e)
