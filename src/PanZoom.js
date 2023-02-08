@@ -421,7 +421,7 @@ export class PanZoom extends React.Component /* React.Component<Props,State> */ 
     if (this.prevScrollEventTimeStamp) {
       const diffTime = Math.abs(e.timeStamp - this.prevScrollEventTimeStamp)
       const isSimilarDirection = isSimilar2DVector(this.prevNormalizedEvent, normalizedEvent)
-      const isTimedOut = diffTime >= this.normalizeConfig.wheelPanZoomSwapTimeout
+      const isTimedOut = diffTime >= this.normalizeConfig.wheelScrollSwapTimeout
       const isTryingPan = (isHorizontalPan || !isWithinScrollable) && e.cancelable
       if ((isTimedOut && (!isSimilarDirection || isTryingPan))) {
         this.wheelContainerScrolling = false
