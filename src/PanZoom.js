@@ -40,6 +40,7 @@ const defaultNormalizeConfig = require('./config')
    boundaryRatioHorizontal: number,
    hasNaturalScroll?: boolean,
    normalizeConfig?: {},
+   debug?: boolean,
 
    onPanStart?: (any) => void,
    onPan?: (any) => void,
@@ -132,6 +133,7 @@ export class PanZoom extends React.Component /* React.Component<Props,State> */ 
     disableDoubleClickZoom: false,
     disableScrollZoom: false,
     hasNaturalScroll: true,
+    debug: false,
     normalizeConfig: defaultNormalizeConfig,
     preventPan: () => false,
   }
@@ -363,6 +365,7 @@ export class PanZoom extends React.Component /* React.Component<Props,State> */ 
       zoomSpeed,
       noStateUpdate,
       hasNaturalScroll,
+      debug,
     } = this.props
 
     if (disabled) return
@@ -379,6 +382,14 @@ export class PanZoom extends React.Component /* React.Component<Props,State> */ 
     const isPinchGesture = this.ctrlKeyPressed && !Number.isInteger(dy)
     const isWithinScrollable = getComputedStyle(e.target).getPropertyValue("--scrollable")
     const isHorizontalPan = (Object.is(0, dy) || Object.is(-0, dy)) && !Object.is(0, dx) 
+
+    if (debug) {
+      console.log("react-easy-panzoom state before", {
+        panning: this.wheelPanning,
+        zooming: this.wheelZooming,
+        scrolling: this.wheelContainerScrolling
+      })
+    }
 
     if (!this.ctrlKeyPressed && this.prevZoomEventTimeStamp) {
       const diffTime = Math.abs(e.timeStamp - this.prevZoomEventTimeStamp)
@@ -476,6 +487,15 @@ export class PanZoom extends React.Component /* React.Component<Props,State> */ 
         this.resetWheelZoomState(e)
       }
     }, this.normalizeConfig.wheelTimerTimeout)
+
+    if (debug) {
+      console.log("react-easy-panzoom state after", {
+        panning: this.wheelPanning,
+        zooming: this.wheelZooming,
+        scrolling: this.wheelContainerScrolling
+      })
+      console.log("react-easy-panzoom", this.prevNormalizedEvent, normalizedEvent)
+    }
 
     this.prevNormalizedEvent = normalizedEvent
   }
@@ -998,6 +1018,7 @@ export class PanZoom extends React.Component /* React.Component<Props,State> */ 
       onStateChange,
       hasNaturalScroll,
       normalizeConfig,
+      debug,
       ...restPassThroughProps
     } = this.props
     const { x, y, scale, angle } = this.state
