@@ -1,54 +1,126 @@
-// @flow
+// @flow-disabled
+
 import * as React from 'react'
 import warning from 'warning'
-import type { Coordinates, BoundCoordinates, TransformationParameters, TransformationMatrix } from './maths'
 import { TransformMatrix, getTransformedBoundingBox, getScaleMultiplier, boundCoordinates } from './maths'
 import { captureTextSelection, releaseTextSelection } from './events'
 
-type OnStateChangeData = {
-  x: number,
-  y: number,
-  scale: number,
-  angle: number
-}
+const defaultNormalizeConfig = require('./config')
 
-type Props = {
-  zoomSpeed: number,
-  doubleZoomSpeed: number,
-  disabled?: boolean,
-  autoCenter?: boolean,
-  autoCenterZoomLevel?: number,
-  disableKeyInteraction?: boolean,
-  disableDoubleClickZoom?: boolean,
-  disableScrollZoom?: boolean,
-  realPinch?: boolean,
-  keyMapping?: { [string]: { x: number, y: number, z: number }},
-  minZoom: number,
-  maxZoom: number,
-  preventPan: (event: SyntheticTouchEvent<HTMLDivElement> | MouseEvent, x: number, y: number) => boolean,
-  noStateUpdate: boolean,
-  boundaryRatioVertical: number,
-  boundaryRatioHorizontal: number,
+/*::
+  import type { Coordinates, BoundCoordinates, TransformationParameters, TransformationMatrix } from './maths'
+*/
 
-  onPanStart?: (any) => void,
-  onPan?: (any) => void,
-  onPanEnd?: (any) => void,
-  onStateChange?: (data: OnStateChangeData) => void,
-} & React.ElementProps<'div'>
+/*::
+ type OnStateChangeData = {
+   x: number,
+   y: number,
+   scale: number,
+   angle: number
+ }
+*/
 
-type State = {
-  x: number,
-  y: number,
-  scale: number,
-  angle: number
-}
+/*::
+ type Props = {
+   zoomSpeed: number,
+   doubleZoomSpeed: number,
+   disabled?: boolean,
+   autoCenter?: boolean,
+   autoCenterZoomLevel?: number,
+   disableKeyInteraction?: boolean,
+   disableDoubleClickZoom?: boolean,
+   disableScrollZoom?: boolean,
+   realPinch?: boolean,
+   keyMapping?: { [string]: { x: number, y: number, z: number }},
+   minZoom: number,
+   maxZoom: number,
+   preventPan: (event: SyntheticTouchEvent<HTMLDivElement> | MouseEvent, x: number, y: number) => boolean,
+   noStateUpdate: boolean,
+   boundaryRatioVertical: number,
+   boundaryRatioHorizontal: number,
+   hasNaturalScroll?: boolean,
+   normalizeConfig?: {},
+   debug?: boolean,
 
-const getTransformMatrixString = (transformationMatrix: TransformationMatrix) => {
+   onPanStart?: (any) => void,
+   onPan?: (any) => void,
+   onPanEnd?: (any) => void,
+   onStateChange?: (data: OnStateChangeData) => void,
+ } & React.ElementProps<'div'>
+*/
+
+/*::
+  type State = {
+   x: number,
+   y: number,
+   scale: number,
+   angle: number
+  }
+*/
+
+const getTransformMatrixString = (transformationMatrix /*: TransformationMatrix */) => {
   const { a, b, c, d, x, y } = transformationMatrix
   return `matrix(${a}, ${b}, ${c}, ${d}, ${x}, ${y})`
 }
 
-class PanZoom extends React.Component<Props, State> {
+function clampValue(value, minAmount) {
+  return Math.sign(value) * Math.min(minAmount, Math.abs(value))
+}
+
+function normalizeWheelEvent(event, hasNaturalScroll, config) {
+  // Notes:
+  // * Inspired by: https://danburzo.ro/dom-gestures/#unify-wheel-touch-gesture
+  // * Trackpad gestures for Pan and Pinch are encoded as an WheelEvent
+  // * The mouse scroll wheel will also create WheelEvents
+  // * We need a way to handle both trackpad and mousewheel events for Pan gestures
+  // * We need to detect when a Pinch gesture happens and treat has distinct from a normal Pan
+
+  const {
+    deltaLineMulti,
+    deltaPageMulti,
+    deltaPixelClamp,
+    deltaPixelClampX,
+    deltaPixelClampY,
+  } = config
+  
+  let dx = event.deltaX
+  let dy = event.deltaY
+
+  // Handle horizontal scrolling with mouse wheel
+  if (dx === 0 && event.shiftKey) {
+    [dx, dy] = [clampValue(dy, deltaPixelClampX), dx]
+  }
+
+  if (event.deltaMode === WheelEvent.DOM_DELTA_LINE) {
+    dx *= deltaLineMulti
+    dy *= deltaLineMulti
+  } else if (event.deltaMode === WheelEvent.DOM_DELTA_PAGE) {
+    dx *= deltaPageMulti
+    dy *= deltaPageMulti
+  }
+
+  const direction = hasNaturalScroll ? -1 : 1
+  return [dx, clampValue(dy, deltaPixelClampY)].map(delta => delta * direction)
+}
+
+function normalizeSign(num) {
+  if (Object.is(0, num)) return 0
+  if (Object.is(-0, num)) return 0
+  return Math.sign(num)
+}
+
+function isSimilar1DComponent(d1, d2) {
+  return Object.is(d1, d2)
+    || Object.is(normalizeSign(d1), normalizeSign(d2))
+}
+
+function isSimilar2DVector(prevDirection, nextDirection) {
+  const [x1, y1] = prevDirection
+  const [x2, y2] = nextDirection
+  return isSimilar1DComponent(x1, x2) && isSimilar1DComponent(y1, y2)
+}
+
+export class PanZoom extends React.Component /* React.Component<Props,State> */ {
   static defaultProps = {
     zoomSpeed: 1,
     doubleZoomSpeed: 1.75,
@@ -60,11 +132,14 @@ class PanZoom extends React.Component<Props, State> {
     boundaryRatioHorizontal: 0.8,
     disableDoubleClickZoom: false,
     disableScrollZoom: false,
+    hasNaturalScroll: true,
+    debug: false,
+    normalizeConfig: defaultNormalizeConfig,
     preventPan: () => false,
   }
 
-  container = React.createRef<HTMLDivElement>()
-  dragContainer = React.createRef<HTMLDivElement>()
+  container = React.createRef()
+  dragContainer = React.createRef()
 
   mousePos = {
     x: 0,
@@ -87,15 +162,34 @@ class PanZoom extends React.Component<Props, State> {
   transformMatrixString = `matrix(1, 0, 0, 1, 0, 0)`
   intermediateTransformMatrixString = `matrix(1, 0, 0, 1, 0, 0)`
 
-  state: State = {
+  state /*: State */ = {
     x: 0,
     y: 0,
     scale: 1,
     angle: 0,
   }
 
-  componentDidMount(): void {
-    const { autoCenter, autoCenterZoomLevel, minZoom, maxZoom } = this.props
+  wheelTimer = null
+  wheelPanning = false
+  wheelZooming = false
+  wheelContainerScrolling = false
+  ctrlKeyPressed = false
+  prevNormalizedEvent = null
+  prevPanEventTimeStamp = null
+  prevZoomEventTimeStamp = null
+  prevScrollEventTimeStamp = null
+  normalizeConfig = defaultNormalizeConfig
+
+  clearWheelTimer = () => {
+    if (this.wheelTimer) {
+      clearTimeout(this.wheelTimer)
+    }
+  }
+
+  componentDidMount()/*: void */ {
+    const { autoCenter, autoCenterZoomLevel, minZoom, maxZoom, normalizeConfig } = this.props
+
+    this.normalizeConfig = Object.assign({}, defaultNormalizeConfig, normalizeConfig)
 
     if (this.container.current) {
       this.container.current.addEventListener('wheel', this.onWheel, { passive: false })
@@ -109,7 +203,7 @@ class PanZoom extends React.Component<Props, State> {
     }
   }
 
-  componentDidUpdate(prevProps: Props, prevState: State): void {
+  componentDidUpdate(prevProps /*: Props */, prevState /*: State */) /*: void */ {
     if (prevProps.autoCenter !== this.props.autoCenter
       && this.props.autoCenter) {
       this.autoCenter(this.props.autoCenterZoomLevel)
@@ -130,7 +224,7 @@ class PanZoom extends React.Component<Props, State> {
     }
   }
 
-  componentWillUnmount(): void {
+  componentWillUnmount() /*: void */ {
     this.cleanMouseListeners()
     this.cleanTouchListeners()
     releaseTextSelection()
@@ -139,7 +233,7 @@ class PanZoom extends React.Component<Props, State> {
     }
   }
 
-  onDoubleClick = (e: MouseEvent) => {
+  onDoubleClick = (e /*: MouseEvent */) => {
     const { onDoubleClick, disableDoubleClickZoom, doubleZoomSpeed } = this.props
 
     if (typeof onDoubleClick === 'function') {
@@ -154,8 +248,8 @@ class PanZoom extends React.Component<Props, State> {
     this.zoomTo(offset.x, offset.y, doubleZoomSpeed)
   }
 
-  onMouseDown = (e: MouseEvent) => {
-    const { preventPan, onMouseDown } = this.props
+  onMouseDown = (e /*: MouseEvent */) => {
+    const { preventPan, onMouseDown, noStateUpdate } = this.props
 
     if (typeof onMouseDown === 'function') {
       onMouseDown(e)
@@ -170,6 +264,17 @@ class PanZoom extends React.Component<Props, State> {
     if (this.touchInProgress) {
       e.stopPropagation()
       return false
+    }
+
+    if (this.wheelPanning) {
+      this.clearWheelTimer()
+      this.wheelPanning = false
+      if (noStateUpdate) {
+        this.setState(({ x: this.prevPanPosition.x, y: this.prevPanPosition.y }), () => {
+          this.onMouseDown(e)
+        })
+      }
+      return
     }
 
     const isLeftButton = ((e.button === 1 && window.event !== null) || e.button === 0)
@@ -203,7 +308,7 @@ class PanZoom extends React.Component<Props, State> {
     captureTextSelection()
   }
 
-  onMouseMove = (e: MouseEvent) => {
+  onMouseMove = (e /*: MouseEvent */) => {
     if (this.panning) {
       const { noStateUpdate } = this.props
 
@@ -225,7 +330,7 @@ class PanZoom extends React.Component<Props, State> {
     }
   }
 
-  onMouseUp = (e: MouseEvent) => {
+  onMouseUp = (e /*: MouseEvent */) => {
     const { noStateUpdate } = this.props
 
     // if using noStateUpdate we still need to set the new values in the state
@@ -239,19 +344,163 @@ class PanZoom extends React.Component<Props, State> {
     releaseTextSelection()
   }
 
-  onWheel = (e: WheelEvent) => {
-    const { disableScrollZoom, disabled, zoomSpeed } = this.props
-    if (disableScrollZoom || disabled) {
-      return
+  resetWheelPanState = (e) => {
+    const { noStateUpdate } = this.props
+    if (noStateUpdate) {
+      this.setState(({ x: this.prevPanPosition.x, y: this.prevPanPosition.y }))
     }
 
-    const scale = getScaleMultiplier(e.deltaY, zoomSpeed)
-    const offset = this.getOffset(e)
-    this.zoomTo(offset.x, offset.y, scale)
-    e.preventDefault()
+    this.triggerOnPanEnd(e)
+    this.wheelPanning = false
   }
 
-  onKeyDown = (e: SyntheticKeyboardEvent<HTMLDivElement>) => {
+  resetWheelZoomState = (e) => {
+    this.wheelZooming = false
+  }
+
+  onWheel = (e /*: WheelEvent */) => {
+    const {
+      disableScrollZoom,
+      disabled,
+      zoomSpeed,
+      noStateUpdate,
+      hasNaturalScroll,
+      debug,
+    } = this.props
+
+    if (disabled) return
+
+    const {
+      wheelMaxZoomSpeed
+    } = this.normalizeConfig
+
+    const wheelZoomSpeed = Math.min(wheelMaxZoomSpeed, zoomSpeed)
+    const normalizedEvent = normalizeWheelEvent(e, hasNaturalScroll, this.normalizeConfig)
+    const [dx, dy] = normalizedEvent
+
+    this.ctrlKeyPressed = e.ctrlKey
+    const isPinchGesture = this.ctrlKeyPressed && !Number.isInteger(dy)
+    const isWithinScrollable = getComputedStyle(e.target).getPropertyValue("--scrollable")
+    const isHorizontalPan = (Object.is(0, dy) || Object.is(-0, dy)) && !Object.is(0, dx) 
+
+    if (debug) {
+      console.log("react-easy-panzoom state before", {
+        panning: this.wheelPanning,
+        zooming: this.wheelZooming,
+        scrolling: this.wheelContainerScrolling
+      })
+    }
+
+    if (!this.ctrlKeyPressed && this.prevZoomEventTimeStamp) {
+      const diffTime = Math.abs(e.timeStamp - this.prevZoomEventTimeStamp)
+      const isSimilarDirection = isSimilar2DVector(this.prevNormalizedEvent, normalizedEvent)
+      if (diffTime >= this.normalizeConfig.wheelPanZoomSwapTimeout && !isSimilarDirection) {
+        this.resetWheelZoomState(e)
+        this.prevZoomEventTimeStamp = null
+
+        if (isWithinScrollable) {
+          e.preventDefault()
+
+          if (!isHorizontalPan) {
+            this.wheelContainerScrolling = true
+            this.prevScrollEventTimeStamp = e.timeStamp
+          }
+        }
+      }
+    }
+
+    if (this.ctrlKeyPressed && this.prevPanEventTimeStamp) {
+      const diffTime = Math.abs(e.timeStamp - this.prevPanEventTimeStamp)
+      const isSimilarDirection = isSimilar2DVector(this.prevNormalizedEvent, normalizedEvent)
+      if (diffTime >= this.normalizeConfig.wheelPanZoomSwapTimeout && !isSimilarDirection) {
+        this.resetWheelPanState(e)
+        this.prevPanEventTimeStamp = null
+      }
+    }
+
+    if (this.prevScrollEventTimeStamp) {
+      const diffTime = Math.abs(e.timeStamp - this.prevScrollEventTimeStamp)
+      const isSimilarDirection = isSimilar2DVector(this.prevNormalizedEvent, normalizedEvent)
+      const isTimedOut = diffTime >= this.normalizeConfig.wheelScrollSwapTimeout
+      const isTryingPan = (isHorizontalPan || !isWithinScrollable) && e.cancelable
+      if ((isTimedOut && (!isSimilarDirection || isTryingPan))) {
+        this.wheelContainerScrolling = false
+        this.prevScrollEventTimeStamp = null
+      }
+    }
+
+    if (!disableScrollZoom && this.wheelZooming && !this.wheelPanning && !this.wheelContainerScrolling && isWithinScrollable) {
+      if (e.cancelable) {
+        e.preventDefault()
+      }
+    }
+
+    if (!disableScrollZoom && this.ctrlKeyPressed && !this.wheelPanning && !this.wheelContainerScrolling) {
+      if (e.cancelable) {
+        e.preventDefault()
+      }
+
+      this.wheelZooming = true
+      this.prevZoomEventTimeStamp = e.timeStamp
+
+      const scale = getScaleMultiplier(e.deltaY, wheelZoomSpeed)
+      const offset = this.getOffset(e)
+      this.zoomTo(offset.x, offset.y, scale)
+    }
+
+    if (!this.ctrlKeyPressed
+      && !this.wheelZooming
+      && !this.wheelPanning
+      && isWithinScrollable
+      && !isHorizontalPan) {
+      this.wheelContainerScrolling = true
+      this.prevScrollEventTimeStamp = e.timeStamp
+    }
+
+    if (!this.wheelZooming && !this.wheelContainerScrolling) {
+      if (e.cancelable) {
+        e.preventDefault()
+      }
+
+      if (!this.wheelPanning) {
+        this.wheelPanning = true
+
+        this.prevPanPosition = {
+          x: this.state.x,
+          y: this.state.y,
+        }
+      } else {
+        this.prevPanEventTimeStamp = e.timeStamp
+        this.triggerOnPanStart(e)
+        this.moveBy(dx, dy, noStateUpdate)
+        this.triggerOnPan(e)
+      }
+    }
+
+    this.clearWheelTimer()
+    this.wheelTimer = window.setTimeout(() => {
+      if (this.wheelPanning) {
+        this.resetWheelPanState(e)
+      }
+
+      if (!this.ctrlKeyPressed) {
+        this.resetWheelZoomState(e)
+      }
+    }, this.normalizeConfig.wheelTimerTimeout)
+
+    if (debug) {
+      console.log("react-easy-panzoom state after", {
+        panning: this.wheelPanning,
+        zooming: this.wheelZooming,
+        scrolling: this.wheelContainerScrolling
+      })
+      console.log("react-easy-panzoom", this.prevNormalizedEvent, normalizedEvent)
+    }
+
+    this.prevNormalizedEvent = normalizedEvent
+  }
+
+  onKeyDown = (e /*: SyntheticKeyboardEvent<HTMLDivElement> */) => {
     const { keyMapping, disableKeyInteraction, onKeyDown } = this.props
 
     if (typeof onKeyDown === 'function') {
@@ -296,7 +545,7 @@ class PanZoom extends React.Component<Props, State> {
     }
   }
 
-  onKeyUp = (e: SyntheticKeyboardEvent<HTMLDivElement>) => {
+  onKeyUp = (e /*: SyntheticKeyboardEvent<HTMLDivElement> */) => {
     const { disableKeyInteraction, onKeyDown } = this.props
 
     if (typeof onKeyDown === 'function') {
@@ -312,7 +561,7 @@ class PanZoom extends React.Component<Props, State> {
     }
   }
 
-  onTouchStart = (e: SyntheticTouchEvent<HTMLDivElement>) => {
+  onTouchStart = (e /*: SyntheticTouchEvent<HTMLDivElement> */) => {
     const { preventPan, onTouchStart, disabled } = this.props
     if (typeof onTouchStart === 'function') {
       onTouchStart(e)
@@ -320,6 +569,17 @@ class PanZoom extends React.Component<Props, State> {
     
     if (disabled) {
       return
+    }
+
+    if (this.wheelPanning) {
+      this.clearWheelTimer()
+      this.wheelPanning = false
+    }
+
+    if (this.wheelZooming) {
+      this.clearWheelTimer()
+      this.wheelZooming = false
+      this.ctrlKeyPressed = false
     }
 
     if (e.touches.length === 1) {
@@ -352,7 +612,7 @@ class PanZoom extends React.Component<Props, State> {
     }
   }
 
-  onToucheMove = (e: TouchEvent) => {
+  onToucheMove = (e /*: TouchEvent */) => {
     const { realPinch, noStateUpdate, zoomSpeed } = this.props
     if (e.touches.length === 1) {
       e.stopPropagation()
@@ -402,7 +662,7 @@ class PanZoom extends React.Component<Props, State> {
     }
   }
 
-  onTouchEnd = (e: TouchEvent) => {
+  onTouchEnd = (e /*: TouchEvent */) => {
     if (e.touches.length > 0) {
       const offset = this.getOffset(e.touches[0])
       this.mousePos = {
@@ -471,7 +731,7 @@ class PanZoom extends React.Component<Props, State> {
     }
   }
 
-  triggerOnPanStart = (e: MouseEvent | TouchEvent) => {
+  triggerOnPanStart = (e /*: MouseEvent | TouchEvent */) => {
     const { onPanStart } = this.props
     if (!this.panStartTriggered && onPanStart && typeof onPanStart === 'function') {
       onPanStart(e)
@@ -479,14 +739,14 @@ class PanZoom extends React.Component<Props, State> {
     this.panStartTriggered = true
   }
 
-  triggerOnPan = (e: MouseEvent | TouchEvent) => {
+  triggerOnPan = (e /*: MouseEvent | TouchEvent */) => {
     const { onPan } = this.props
     if (typeof onPan === 'function') {
       onPan(e)
     }
   }
 
-  triggerOnPanEnd = (e: MouseEvent | TouchEvent) => {
+  triggerOnPanEnd = (e /*: MouseEvent | TouchEvent */) => {
     const { onPanEnd } = this.props
     this.panStartTriggered = false
     if (typeof onPanEnd === 'function') {
@@ -494,14 +754,14 @@ class PanZoom extends React.Component<Props, State> {
     }
   }
 
-  getPinchZoomLength = (finger1: Touch, finger2: Touch): number => {
+  getPinchZoomLength = (finger1 /*: Touch */, finger2 /*: Touch */) /*: number */ => {
     return Math.sqrt(
       (finger1.clientX - finger2.clientX) * (finger1.clientX - finger2.clientX) +
       (finger1.clientY - finger2.clientY) * (finger1.clientY - finger2.clientY)
     )
   }
 
-  getContainer = (): HTMLDivElement => {
+  getContainer = () /*: HTMLDivElement */ => {
     const { current: container } = this.container
     if (!container) {
       throw new Error("Could not find container DOM element.")
@@ -509,7 +769,7 @@ class PanZoom extends React.Component<Props, State> {
     return container
   }
 
-  getDragContainer = (): HTMLDivElement => {
+  getDragContainer = () /*: HTMLDivElement */ => {
     const { current: dragContainer } = this.dragContainer
     if (!dragContainer) {
       throw new Error("Could not find dragContainer DOM element.")
@@ -517,7 +777,7 @@ class PanZoom extends React.Component<Props, State> {
     return dragContainer
   }
 
-  autoCenter = (zoomLevel: number = 1, animate: boolean = true) => {
+  autoCenter = (zoomLevel /*: number */ = 1, animate /*: boolean */ = true) => {
     const container = this.getContainer()
     const dragContainer = this.getDragContainer()
     const { minZoom, maxZoom } = this.props
@@ -555,7 +815,7 @@ class PanZoom extends React.Component<Props, State> {
     this.setState({ x, y, scale, angle: 0 }, afterStateUpdate)
   }
 
-  moveByRatio = (x: number, y: number, moveSpeedRatio: number = 0.05) => {
+  moveByRatio = (x /*: number */, y /*: number */, moveSpeedRatio /*: number */ = 0.05) => {
     const container = this.getContainer()
     const containerRect = container.getBoundingClientRect()
     const offset = Math.min(containerRect.width, containerRect.height)
@@ -565,7 +825,7 @@ class PanZoom extends React.Component<Props, State> {
     this.moveBy(dx, dy, false)
   }
 
-  moveBy = (dx: number, dy: number, noStateUpdate?: boolean = true) => {
+  moveBy = (dx /*: number */, dy /*: number */, noStateUpdate /*?: boolean */ = true) => {
     const { x, y, scale, angle } = this.state
 
     // Allow better performance by not updating the state on every change
@@ -604,9 +864,9 @@ class PanZoom extends React.Component<Props, State> {
     }
   }
 
-  rotate = (value: number | (prevAngle: number) => number) => {
+  rotate = (value /*: number | (prevAngle: number) => number */) => {
     const { angle } = this.state
-    let newAngle: number
+    let newAngle /*: number */
     if (typeof value === 'function') {
       newAngle = value(angle)
     } else {
@@ -615,11 +875,11 @@ class PanZoom extends React.Component<Props, State> {
     this.setState({ angle: newAngle })
   }
 
-  zoomAbs = (x: number, y: number, zoomLevel: number) => {
+  zoomAbs = (x /*: number */, y /*: number */, zoomLevel /*: number */) => {
     this.zoomTo(x, y, zoomLevel / this.state.scale)
   }
 
-  zoomTo = (x: number, y: number, ratio: number) => {
+  zoomTo = (x /*: number */, y /*: number */, ratio /*: number */) => {
     const { minZoom, maxZoom } = this.props
     const { x: transformX, y: transformY, scale, angle } = this.state
 
@@ -647,18 +907,18 @@ class PanZoom extends React.Component<Props, State> {
     this.setState({ x: boundX, y: boundY, scale: newScale })
   }
 
-  centeredZoom = (delta: number, zoomSpeed?: number) => {
+  centeredZoom = (delta /*: number */, zoomSpeed /*?: number */) => {
     const container = this.getContainer()
     const scaleMultiplier = getScaleMultiplier(delta, zoomSpeed || this.props.zoomSpeed)
     const containerRect = container.getBoundingClientRect()
     this.zoomTo(containerRect.width / 2, containerRect.height / 2, scaleMultiplier)
   }
 
-  zoomIn = (zoomSpeed?: number) => {
+  zoomIn = (zoomSpeed /*?: number */) => {
     this.centeredZoom(-1, zoomSpeed)
   }
 
-  zoomOut = (zoomSpeed?: number) => {
+  zoomOut = (zoomSpeed /*?: number */) => {
     this.centeredZoom(1, zoomSpeed)
   }
 
@@ -666,18 +926,18 @@ class PanZoom extends React.Component<Props, State> {
     this.setState({ x: 0, y: 0, scale: 1, angle: 0 })
   }
 
-  getContainerBoundingRect = (): ClientRect => {
+  getContainerBoundingRect = () /*: ClientRect */ => {
     return this.getContainer().getBoundingClientRect()
   }
 
-  getOffset = (e: MouseEvent | Touch): Coordinates => {
+  getOffset = (e /*: MouseEvent | Touch */) /*: Coordinates */ => {
     const containerRect = this.getContainerBoundingRect()
     const offsetX = e.clientX - containerRect.left
     const offsetY = e.clientY - containerRect.top
     return { x: offsetX, y: offsetY }
   }
 
-  getTransformMatrix = (x: number, y: number, scale: number, angle: number): TransformationMatrix => {
+  getTransformMatrix = (x /*: number */, y /*: number */, scale /*: number */, angle /*: number */) /*: TransformationMatrix */ => {
     if (!this.dragContainer.current) {
       return { a: scale, b: 0, c: 0, d: scale, x, y }
     }
@@ -701,7 +961,7 @@ class PanZoom extends React.Component<Props, State> {
     this.intermediateFrameAnimation = 0
   }
 
-  getBoundCoordinates = (coordinates: Coordinates, transformationParameters: TransformationParameters): BoundCoordinates => {
+  getBoundCoordinates = (coordinates /*: Coordinates */, transformationParameters /*: TransformationParameters */) /*: BoundCoordinates */ => {
     const { x, y } = coordinates
     const { enableBoundingBox, boundaryRatioVertical, boundaryRatioHorizontal } = this.props
     const { offsetX = 0, offsetY = 0 } = transformationParameters
@@ -756,6 +1016,9 @@ class PanZoom extends React.Component<Props, State> {
       onKeyUp,
       onTouchStart,
       onStateChange,
+      hasNaturalScroll,
+      normalizeConfig,
+      debug,
       ...restPassThroughProps
     } = this.props
     const { x, y, scale, angle } = this.state
@@ -789,43 +1052,45 @@ class PanZoom extends React.Component<Props, State> {
       )
     }
 
-    return (
-      <div
-        ref={this.container}
-        {
-          ...(disableKeyInteraction ? {} : {
-            tabIndex: 0, // enable onKeyDown event
-          })
-        }
-        onDoubleClick={this.onDoubleClick}
-        onMouseDown={this.onMouseDown}
+    return React.createElement(
+      'div',
+      Object.assign({
+        ref: this.container,
+        onDoubleClick: this.onDoubleClick,
+        onMouseDown: this.onMouseDown,
+
         // React onWheel event listener is broken on Chrome 73
         // The default options for the wheel event listener has been defaulted to passive
         // but this behaviour breaks the zoom feature of PanZoom.
         // Until further research onWheel listener is replaced by
         // this.container.addEventListener('mousewheel', this.onWheel, { passive: false })
         // see Chrome motivations https://developers.google.com/web/updates/2019/02/scrolling-intervention
-        //onWheel={this.onWheel}
-        onKeyDown={this.onKeyDown}
-        onKeyUp={this.onKeyUp}
-        onTouchStart={this.onTouchStart}
-        style={{ cursor: disabled ? 'initial' : 'pointer', ...style }}
-        {...restPassThroughProps}
-      >
-        <div
-          ref={this.dragContainer}
-          style={{
+        // onWheel: this.onWheel
+
+        onKeyDown: this.onKeyDown,
+        onKeyUp: this.onKeyUp,
+        onTouchStart: this.onTouchStart,
+        style: {
+          cursor: disabled ? 'initial' : 'pointer',
+          ...style
+        },
+      },
+      disableKeyInteraction ? {} : { tabIndex: 0 },
+      restPassThroughProps),
+
+      React.createElement(
+        'div',
+        {
+          ref: this.dragContainer,
+          style: {
             display: 'inline-block',
             transformOrigin: '0 0 0',
             transform,
             transition: 'all 0.10s linear',
             willChange: 'transform',
-          }}
-        >
-          {children}
-        </div>
-      </div>
-    )
+          }
+        },
+        children))
   }
 }
 
