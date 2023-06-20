@@ -516,10 +516,10 @@ export class PanZoom extends React.Component /* React.Component<Props,State> */ 
       '40': { x: 0, y: 1, z: 0 }, // down
       '37': { x: -1, y: 0, z: 0 }, // left
       '39': { x: 1, y: 0, z: 0 }, // right
-      '189': { x: 0, y: 0, z: 1 }, // zoom out
-      '109': { x: 0, y: 0, z: 1 }, // zoom out
-      '187': { x: 0, y: 0, z: -1 }, // zoom in
-      '107': { x: 0, y: 0, z: -1 }, // zoom in
+      // '189': { x: 0, y: 0, z: 1 }, // zoom out
+      // '109': { x: 0, y: 0, z: 1 }, // zoom out
+      // '187': { x: 0, y: 0, z: -1 }, // zoom in
+      // '107': { x: 0, y: 0, z: -1 }, // zoom in
       ...keyMapping,
     }
 
